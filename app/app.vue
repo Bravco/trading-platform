@@ -13,9 +13,12 @@
                     </template>
 
                     <template #body>
-                        <div class="w-full h-full flex">
-                            <DrawingToolbar/>
-                            <div ref="chartContainer" class="w-full h-full"/>
+                        <div class="w-full h-full flex flex-col">
+                            <TopBar/>
+                            <div class="w-full h-full flex">
+                                <DrawingToolbar/>
+                                <div ref="chartContainer" class="w-full h-full"/>
+                            </div>
                         </div>
                     </template>
                 </UDashboardPanel>
@@ -34,16 +37,25 @@
     const chartContainer = ref<HTMLDivElement | null>(null);
     const resizeObserver = ref<ResizeObserver | null>(null);
     const ws = ref<WebSocket | null>(null);
-    const selectedSymbol = ref<string>("BTCUSDT");
-    const interval = ref<string>("1m");
-
+    
     overlays.forEach(overlay => registerOverlay(overlay));
+
+    watch(
+        [() => kline.symbol, () => kline.interval],
+        async ([_oldInterval, _oldSymbol], [_newInterval, _newSymbol]) => {
+            if (!kline.chart) return;
+
+            const data = await fetchHistoricalData();
+            kline.chart.applyNewData(data);
+            connectWebSocket();
+        }
+    );
 
     async function fetchHistoricalData(limit = 1000) {
         if (import.meta.server) return [];
         
         try {
-            const url = `https://api.binance.com/api/v3/klines?symbol=${selectedSymbol.value}&interval=${interval.value}&limit=${limit}`;
+            const url = `https://api.binance.com/api/v3/klines?symbol=${kline.symbol}&interval=${kline.interval}&limit=${limit}`;
             const res = await fetch(url);
             const raw = await res.json();
 
@@ -62,9 +74,12 @@
     }
 
     function connectWebSocket() {
-        if (ws.value) ws.value.close();
+        if (ws.value) {
+            ws.value.close();
+            ws.value = null;
+        }
 
-        const streamName = `${selectedSymbol.value.toLowerCase()}@kline_${interval.value}`;
+        const streamName = `${kline.symbol.toLowerCase()}@kline_${kline.interval}`;
         const socketUrl = `wss://stream.binance.com:9443/ws/${streamName}`;
         ws.value = new WebSocket(socketUrl);
 
