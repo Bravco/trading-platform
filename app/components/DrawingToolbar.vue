@@ -74,8 +74,10 @@
     const drawingOverlayName = ref<string | null>(null);
 
     const overlays = reactive([
+        { name: "segment", icon: "i-lucide-slash" },
         { name: "horizontalStraightLine", icon: "i-lucide-git-commit-horizontal" },
         { name: "verticalStraightLine", icon: "i-lucide-git-commit-vertical" },
+        { name: "fibonacciLine", icon: "i-lucide-menu" },
         { name: "circle", icon: "i-lucide-circle" },
         { name: "rect", icon: "i-lucide-square" }
     ]);
