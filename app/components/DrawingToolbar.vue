@@ -57,7 +57,7 @@
             variant="ghost"
             color="neutral"
             class="cursor-pointer"
-            disabled
+            @click="removeOverlay"
         />
     </div>
 </template>
@@ -116,5 +116,9 @@
     function toggleVisibility() {
         visible.value = !visible.value;
         kline.chart?.overrideOverlay({ visible: visible.value });
+    }
+
+    function removeOverlay() {
+        kline.chart?.removeOverlay();
     }
 </script>
