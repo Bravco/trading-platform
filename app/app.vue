@@ -3,7 +3,7 @@
         <NuxtRouteAnnouncer/>
         <UApp>
             <UDashboardGroup>
-                <UDashboardPanel>
+                <UDashboardPanel :ui="{ body: 'p-0 sm:p-0' }">
                     <template #header>
                         <UDashboardNavbar title="Trading Platform">
                             <template #right>
@@ -13,7 +13,10 @@
                     </template>
 
                     <template #body>
-                        <div id="tradingview-chart" class="w-full h-full"></div>
+                        <div class="w-full h-full flex">
+                            <DrawingToolbar/>
+                            <div ref="chartContainer" class="w-full h-full"/>
+                        </div>
                     </template>
                 </UDashboardPanel>
             </UDashboardGroup>
@@ -21,30 +24,88 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-    const colorMode = useColorMode();
+<script setup lang="ts">
+    import { init, dispose, registerOverlay } from "klinecharts";
+    import type { KLineData } from "klinecharts";
 
-    onMounted(() => {
-        const script = document.createElement("script");
-        script.src = "https://s3.tradingview.com/tv.js";
-        script.async = true;
-        script.onload = () => {
-            new (window as any).TradingView.widget({
-                container_id: "tradingview-chart",
-                autosize: true,
-                symbol: "OANDA:EURUSD",
-                interval: "1",
-                timezone: "Etc/UTC",
-                theme: colorMode.value,
-                style: "1",
-                locale: "en",
-                enable_publishing: false,
-                allow_symbol_change: false,
-                withdateranges: true,
-                hide_volume: true,
-                hide_side_toolbar: false
-            });
+    const kline = useKlineStore();
+    const overlays = useOverlays();
+
+    const chartContainer = ref<HTMLDivElement | null>(null);
+    const resizeObserver = ref<ResizeObserver | null>(null);
+    const ws = ref<WebSocket | null>(null);
+    const selectedSymbol = ref<string>("BTCUSDT");
+    const interval = ref<string>("1m");
+
+    overlays.forEach(overlay => registerOverlay(overlay));
+
+    async function fetchHistoricalData(limit = 500) {
+        if (import.meta.server) return [];
+
+        const url = `https://api.binance.com/api/v3/klines?symbol=${selectedSymbol.value}&interval=${interval.value}&limit=${limit}`;
+        const res = await fetch(url);
+        const raw = await res.json();
+
+        return raw.map((d: any[]) => ({
+            timestamp: d[0],
+            open: parseFloat(d[1]),
+            high: parseFloat(d[2]),
+            low: parseFloat(d[3]),
+            close: parseFloat(d[4]),
+            volume: parseFloat(d[5]),
+        })) as KLineData[];
+    }
+
+    function connectWebSocket() {
+        if (ws.value) ws.value.close();
+
+        const streamName = `${selectedSymbol.value.toLowerCase()}@kline_${interval.value}`;
+        const socketUrl = `wss://stream.binance.com:9443/ws/${streamName}`;
+        ws.value = new WebSocket(socketUrl);
+
+        ws.value.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            if (msg.e === "kline") {
+                const k = msg.k;
+                const data: KLineData = {
+                    timestamp: k.t,
+                    open: parseFloat(k.o),
+                    high: parseFloat(k.h),
+                    low: parseFloat(k.l),
+                    close: parseFloat(k.c),
+                    volume: parseFloat(k.v),
+                };
+
+                if (k.x) {
+                    // Closed candle
+                    kline.chart?.updateData(data);
+                } else {
+                    // Live updating candle
+                    kline.chart?.updateData(data);
+                }
+            }
         };
-        document.body.appendChild(script);
+    }
+
+    onMounted(async () => {
+        if (!chartContainer.value) return;
+
+        kline.chart = init(chartContainer.value);
+        if (!kline.chart) return;
+
+        resizeObserver.value = new ResizeObserver(() => {
+            if (kline.chart) kline.chart.resize();
+        });
+        resizeObserver.value.observe(chartContainer.value);
+
+        const data = await fetchHistoricalData();
+        kline.chart.applyNewData(data);
+        connectWebSocket();
+    });
+
+    onUnmounted(() => {
+        resizeObserver.value?.disconnect();
+        ws.value?.close();
+        if (chartContainer.value) dispose(chartContainer.value);
     });
 </script>
