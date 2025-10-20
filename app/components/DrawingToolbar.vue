@@ -4,8 +4,8 @@
             v-for="(item, index) in overlays"
             :key="index"
             :icon="item.icon"
-            variant="ghost"
-            color="neutral"
+            :variant="drawingOverlayName === item.name ? 'soft' : 'ghost'"
+            :color="drawingOverlayName === item.name ? 'primary' : 'neutral'"
             square
             @click="addOverlay(item.name)"
         />
@@ -19,7 +19,7 @@
             <UButton
                 icon="i-lucide-magnet"
                 :variant="mode === 'normal' ? 'ghost' : 'soft'"
-                color="neutral"
+                :color="mode === 'normal' ? 'neutral' : 'primary'"
                 square
                 @click="clickMode"
             />
@@ -29,7 +29,7 @@
                     :key="index"
                     icon="i-lucide-magnet"
                     :variant="mode === subMode.value ? 'soft' : 'ghost'"
-                    color="neutral"
+                    :color="mode === subMode.value ? 'primary' : 'neutral'"
                     :label="subMode.label"
                     :ui="{ base: 'w-full' }"
                     square
@@ -39,15 +39,15 @@
         </UTooltip>
         <UButton
             :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
-            variant="ghost"
-            color="neutral"
+            :variant="lock ? 'soft' : 'ghost'"
+            :color="lock ? 'primary' : 'neutral'"
             square
             @click="toggleLock"
         />
         <UButton
             :icon="visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-            variant="ghost"
-            color="neutral"
+            :variant="visible ? 'ghost' : 'soft'"
+            :color="visible ? 'neutral' : 'primary'"
             square
             @click="toggleVisibility"
         />
@@ -63,13 +63,15 @@
 </template>
 
 <script lang="ts" setup>
-    import type { OverlayMode } from "klinecharts";
+    import type { OverlayMode, OverlayEvent } from "klinecharts";
 
     const kline = useKlineStore();
 
     const mode = ref<string>("normal");
     const lock = ref<boolean>(false);
     const visible = ref<boolean>(true);
+    const selectedOverlayId = ref<string | null>(null);
+    const drawingOverlayName = ref<string | null>(null);
 
     const overlays = reactive([
         { name: "horizontalStraightLine", icon: "i-lucide-git-commit-horizontal" },
@@ -90,7 +92,23 @@
             name: name,
             visible: visible.value,
             lock: lock.value,
-            mode: mode.value as OverlayMode
+            mode: mode.value as OverlayMode,
+            onDrawStart: (event: OverlayEvent<any>) => {
+                drawingOverlayName.value = event.overlay.name;
+                return true;
+            },
+            onDrawEnd: () => {
+                drawingOverlayName.value = null
+                return true;
+            },
+            onSelected: (event: OverlayEvent<any>) => {
+                selectedOverlayId.value = event.overlay.id;
+                return true;
+            },
+            onDeselected: () => {
+                selectedOverlayId.value = null;
+                return true;
+            }
         });
     }
 
@@ -119,6 +137,8 @@
     }
 
     function removeOverlay() {
-        kline.chart?.removeOverlay();
+        if (selectedOverlayId.value) {
+            kline.chart?.removeOverlay({ id: selectedOverlayId.value });
+        }
     }
 </script>
