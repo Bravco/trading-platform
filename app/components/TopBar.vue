@@ -1,13 +1,25 @@
 <template>
-    <div class="flex p-2 border-b border-b-muted">
-        <UButton
-            v-for="(timeframe, index) in timeframes"
-            :key="index"
-            :label="timeframe"
-            :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
-            color="neutral"
-            @click="changeTimeframe(timeframe)"
-        />
+    <div class="flex border-b border-b-muted">
+        <div class="grid place-items-center border-r border-r-muted font-medium">
+            <UButton
+                icon="i-lucide-list"
+                :label="kline.symbol"
+                color="neutral"
+                class="w-full h-full rounded-none"
+                variant="ghost"
+            />
+        </div>
+        <div class="flex items-center gap-2 p-2">
+            <UButton
+                v-for="(timeframe, index) in timeframes"
+                :key="index"
+                :label="timeframe"
+                :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
+                color="neutral"
+                square
+                @click="changeTimeframe(timeframe)"
+            />
+        </div>
     </div>
 </template>
 

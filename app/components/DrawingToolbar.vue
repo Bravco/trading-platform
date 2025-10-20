@@ -6,7 +6,7 @@
             :icon="item.icon"
             variant="ghost"
             color="neutral"
-            class="cursor-pointer"
+            square
             @click="addOverlay(item.name)"
         />
         <USeparator/>
@@ -20,8 +20,8 @@
                 icon="i-lucide-magnet"
                 :variant="mode === 'normal' ? 'ghost' : 'soft'"
                 color="neutral"
+                square
                 @click="clickMode"
-                class="cursor-pointer"
             />
             <template #content>
                 <UButton
@@ -32,7 +32,7 @@
                     color="neutral"
                     :label="subMode.label"
                     :ui="{ base: 'w-full' }"
-                    class="cursor-pointer"
+                    square
                     @click="clickSubMode(subMode.value)"
                 />
             </template>
@@ -41,14 +41,14 @@
             :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
             variant="ghost"
             color="neutral"
-            class="cursor-pointer"
+            square
             @click="toggleLock"
         />
         <UButton
             :icon="visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
             variant="ghost"
             color="neutral"
-            class="cursor-pointer"
+            square
             @click="toggleVisibility"
         />
         <USeparator/>
@@ -56,7 +56,7 @@
             icon="i-lucide-trash"
             variant="ghost"
             color="neutral"
-            class="cursor-pointer"
+            square
             @click="removeOverlay"
         />
     </div>
