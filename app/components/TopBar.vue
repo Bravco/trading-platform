@@ -101,6 +101,7 @@
 
     function selectSymbol(symbol: string) {
         symbolModal.value = false;
+        search.value = "";
         if (kline.symbol === symbol) return;
         kline.symbol = symbol;
     }
