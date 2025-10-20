@@ -39,21 +39,26 @@
 
     overlays.forEach(overlay => registerOverlay(overlay));
 
-    async function fetchHistoricalData(limit = 500) {
+    async function fetchHistoricalData(limit = 1000) {
         if (import.meta.server) return [];
+        
+        try {
+            const url = `https://api.binance.com/api/v3/klines?symbol=${selectedSymbol.value}&interval=${interval.value}&limit=${limit}`;
+            const res = await fetch(url);
+            const raw = await res.json();
 
-        const url = `https://api.binance.com/api/v3/klines?symbol=${selectedSymbol.value}&interval=${interval.value}&limit=${limit}`;
-        const res = await fetch(url);
-        const raw = await res.json();
-
-        return raw.map((d: any[]) => ({
-            timestamp: d[0],
-            open: parseFloat(d[1]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3]),
-            close: parseFloat(d[4]),
-            volume: parseFloat(d[5]),
-        })) as KLineData[];
+            return raw.map((d: any[]) => ({
+                timestamp: d[0],
+                open: parseFloat(d[1]),
+                high: parseFloat(d[2]),
+                low: parseFloat(d[3]),
+                close: parseFloat(d[4]),
+                volume: parseFloat(d[5]),
+            })) as KLineData[];
+        } catch (error) {
+            console.error("Failed to fetch historical data: ", error);
+            return [];
+        }
     }
 
     function connectWebSocket() {
@@ -98,9 +103,11 @@
         });
         resizeObserver.value.observe(chartContainer.value);
 
-        const data = await fetchHistoricalData();
-        kline.chart.applyNewData(data);
-        connectWebSocket();
+        if (!import.meta.server) {
+            const data = await fetchHistoricalData();
+            kline.chart.applyNewData(data);
+            connectWebSocket();
+        }
     });
 
     onUnmounted(() => {

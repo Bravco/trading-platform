@@ -38,6 +38,13 @@
             </template>
         </UTooltip>
         <UButton
+            :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
+            variant="ghost"
+            color="neutral"
+            class="cursor-pointer"
+            @click="toggleLock"
+        />
+        <UButton
             :icon="visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
             variant="ghost"
             color="neutral"
@@ -99,6 +106,11 @@
     function clickSubMode(value: string) {
         mode.value = value;
         kline.chart?.overrideOverlay({ mode: value as OverlayMode });
+    }
+
+    function toggleLock() {
+        lock.value = !lock.value;
+        kline.chart?.overrideOverlay({ lock: lock.value });
     }
 
     function toggleVisibility() {
