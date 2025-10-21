@@ -5,7 +5,7 @@
                 v-model:open="symbolModal"
                 title="Symbols"
                 :description="`Count: ${symbols?.length || 0}`"
-                :ui="{ content: 'h-[50dvh]', footer: 'justify-center' }"
+                :ui="{ content: 'h-100', footer: 'justify-center' }"
             >
                 <UButton
                     icon="i-lucide-list"
