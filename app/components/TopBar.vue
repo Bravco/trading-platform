@@ -5,7 +5,7 @@
                 v-model:open="symbolModal"
                 title="Symbols"
                 :description="`Count: ${symbols?.length || 0}`"
-                :ui="{ content: 'h-100', footer: 'justify-center' }"
+                :ui="{ content: 'h-full', footer: 'justify-center' }"
             >
                 <UButton
                     icon="i-lucide-list"
@@ -33,14 +33,13 @@
                             </template>
                         </UInput>
                     </div>
-                    <div class="grid grid-cols-3">
+                    <div class="flex flex-wrap gap-1">
                         <UButton
                             v-for="(symbol, index) in pagedSymbols"
                             :key="index"
                             :label="symbol"
                             variant="ghost"
                             color="neutral"
-                            class="w-full"
                             @click="selectSymbol(symbol)"
                         />
                     </div>
@@ -75,7 +74,16 @@
         {
             transform: (res: any) => 
                 res.symbols
-                    .filter((s: any) => s.status === "TRADING")
+                    .filter((s: any) => 
+                        s.status === "TRADING" &&
+                        s.isSpotTradingAllowed &&
+                        s.quoteAsset === "USDT" &&
+                        !s.symbol.includes("UP") &&
+                        !s.symbol.includes("DOWN") &&
+                        !s.symbol.startsWith("1000") &&
+                        !s.symbol.endsWith("BULL") &&
+                        !s.symbol.endsWith("BEAR")
+                    )
                     .map((s: any) => s.symbol)
         }
     );
