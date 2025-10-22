@@ -4,14 +4,6 @@
         <UApp>
             <UDashboardGroup>
                 <UDashboardPanel :ui="{ body: 'p-0 sm:p-0' }">
-                    <template #header>
-                        <UDashboardNavbar title="Trading Platform">
-                            <template #right>
-                                <UColorModeButton/>
-                            </template>
-                        </UDashboardNavbar>
-                    </template>
-
                     <template #body>
                         <div class="w-full h-full flex flex-col">
                             <TopBar/>

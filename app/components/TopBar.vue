@@ -16,6 +16,8 @@
             />
             <USeparator orientation="vertical"/>
             <TimezoneModal/>
+            <USeparator orientation="vertical"/>
+            <UColorModeButton/>
         </div>
     </div>
 </template>
