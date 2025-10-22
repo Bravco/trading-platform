@@ -13,7 +13,7 @@
         <UTooltip
             :delay-duration="0"
             arrow
-            :content="{ side: 'right' }"
+            :content="{ side: 'right', align: 'start' }"
             :ui="{ content: 'h-auto flex-col' }"
         >
             <UButton
@@ -32,8 +32,7 @@
                     :color="mode === subMode.value ? 'primary' : 'neutral'"
                     :label="subMode.label"
                     :ui="{ base: 'w-full' }"
-                    square
-                    @click="clickSubMode(subMode.value)"
+                    @click="selectSubMode(subMode.value)"
                 />
             </template>
         </UTooltip>
@@ -123,7 +122,7 @@
         kline.chart?.overrideOverlay({ mode: mode.value as OverlayMode });
     }
 
-    function clickSubMode(value: string) {
+    function selectSubMode(value: string) {
         mode.value = value;
         kline.chart?.overrideOverlay({ mode: value as OverlayMode });
     }

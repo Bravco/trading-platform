@@ -15,7 +15,7 @@
                 v-model="timezone"
                 value-key="value"
                 :items="items"
-                class="w-full"
+                class="w-full cursor-pointer"
             />
         </template>
     </UModal>
