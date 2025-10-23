@@ -73,29 +73,44 @@
 
         const streamName = `${kline.symbol.toLowerCase()}@kline_${kline.interval}`;
         const socketUrl = `wss://stream.binance.com:9443/ws/${streamName}`;
-        ws.value = new WebSocket(socketUrl);
+
+        try {
+            ws.value = new WebSocket(socketUrl);
+        } catch (error) {
+            console.error("Failed to create WebSocket: ", error);
+            return;
+        }
 
         ws.value.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            if (msg.e === "kline") {
-                const k = msg.k;
-                const data: KLineData = {
-                    timestamp: k.t,
-                    open: parseFloat(k.o),
-                    high: parseFloat(k.h),
-                    low: parseFloat(k.l),
-                    close: parseFloat(k.c),
-                    volume: parseFloat(k.v),
-                };
+            try {
+                const msg = JSON.parse(event.data);
+                if (msg.e === "kline") {
+                    const k = msg.k;
+                    const data: KLineData = {
+                        timestamp: k.t,
+                        open: parseFloat(k.o),
+                        high: parseFloat(k.h),
+                        low: parseFloat(k.l),
+                        close: parseFloat(k.c),
+                        volume: parseFloat(k.v),
+                    };
 
-                if (k.x) {
-                    // Closed candle
-                    kline.chart?.updateData(data);
-                } else {
-                    // Live updating candle
-                    kline.chart?.updateData(data);
+                    if (k.x) {
+                        // Closed candle
+                        kline.chart?.updateData(data);
+                    } else {
+                        // Live updating candle
+                        kline.chart?.updateData(data);
+                    }
                 }
+            } catch (error)  {
+                console.error("WebSocket error: ", error);
             }
+        };
+
+        ws.value.onclose = () => {
+            console.log("WebSocket connection closed, reconnecting...");
+            setTimeout(connectWebSocket, 3000);
         };
     }
 
@@ -110,7 +125,7 @@
         });
         resizeObserver.value.observe(chartContainer.value);
 
-        if (!import.meta.server) {
+        if (import.meta.client) {
             const data = await fetchHistoricalData();
             kline.chart.applyNewData(data);
             connectWebSocket();

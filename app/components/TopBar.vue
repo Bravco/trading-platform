@@ -1,47 +1,49 @@
 <template>
-    <div class="flex border-b border-b-muted overflow-x-auto">
-        <div class="grid place-items-center font-medium">
-            <SymbolModal/>
-        </div>
-        <USeparator orientation="vertical"/>
-        <div class="w-full flex items-center gap-2 p-2">
-            <UButton
-                v-for="(timeframe, index) in timeframes"
-                :key="index"
-                :label="timeframe"
-                :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
-                color="neutral"
-                square
-                @click="selectTimeframe(timeframe)"
-            />
+    <div>
+        <div class="flex border-b border-b-muted overflow-x-auto">
+            <div class="grid place-items-center font-medium">
+                <SymbolModal/>
+            </div>
             <USeparator orientation="vertical"/>
-            <UTooltip
-                :delay-duration="0"
-                arrow
-                :ui="{ content: 'h-auto flex-col' }"
-            >
+            <div class="w-full flex items-center gap-2 p-2">
                 <UButton
-                    :icon="candleType?.icon"
-                    variant="ghost"
+                    v-for="(timeframe, index) in timeframes"
+                    :key="index"
+                    :label="timeframe"
+                    :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
                     color="neutral"
                     square
+                    @click="selectTimeframe(timeframe)"
                 />
-                <template #content>
+                <USeparator orientation="vertical"/>
+                <UTooltip
+                    :delay-duration="0"
+                    arrow
+                    :ui="{ content: 'h-auto flex-col' }"
+                >
                     <UButton
-                        v-for="(item, index) in candleTypes"
-                        :key="index"
-                        :icon="item.icon"
+                        :icon="candleType?.icon"
                         variant="ghost"
                         color="neutral"
-                        :label="item.label"
-                        :ui="{ base: 'w-full' }"
-                        @click="candleType = item"
+                        square
                     />
-                </template>
-            </UTooltip>
-            <USeparator orientation="vertical"/>
-            <TimezoneModal/>
-            <UColorModeButton class="ml-auto"/>
+                    <template #content>
+                        <UButton
+                            v-for="(item, index) in candleTypes"
+                            :key="index"
+                            :icon="item.icon"
+                            variant="ghost"
+                            color="neutral"
+                            :label="item.label"
+                            :ui="{ base: 'w-full' }"
+                            @click="candleType = item"
+                        />
+                    </template>
+                </UTooltip>
+                <USeparator orientation="vertical"/>
+                <TimezoneModal/>
+                <UColorModeButton class="ml-auto"/>
+            </div>
         </div>
     </div>
 </template>
