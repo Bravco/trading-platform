@@ -1,10 +1,7 @@
 <template>
     <div>
         <div class="flex border-b border-b-muted overflow-x-auto">
-            <div class="grid place-items-center font-medium">
-                <SymbolModal/>
-            </div>
-            <USeparator orientation="vertical"/>
+            <SymbolModal/>
             <div class="w-full flex items-center gap-2 p-2">
                 <UButton
                     v-for="(timeframe, index) in timeframes"
@@ -40,6 +37,8 @@
                         />
                     </template>
                 </UTooltip>
+                <USeparator orientation="vertical"/>
+                <IndicatorModal/>
                 <USeparator orientation="vertical"/>
                 <TimezoneModal/>
                 <UColorModeButton class="ml-auto"/>
