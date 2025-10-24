@@ -4,7 +4,7 @@
             v-model:open="modal"
             title="Symbols"
             :description="`Count: ${symbols?.length || 0}`"
-            :ui="{ content: 'h-full', footer: 'justify-center' }"
+            :ui="{ footer: 'justify-center' }"
         >
             <UButton
                 icon="i-lucide-list"
@@ -14,7 +14,7 @@
                 variant="ghost"
             />
             <template #body>
-                <div class="sticky top-0">
+                <div class="sticky top-0 mb-4">
                     <UInput
                         v-model="search"
                         icon="i-lucide-search"
@@ -32,13 +32,13 @@
                         </template>
                     </UInput>
                 </div>
-                <div class="flex flex-wrap gap-1">
+                <div class="flex flex-col gap-2">
                     <UButton
-                        v-for="(symbol, index) in pagedSymbols"
-                        :key="index"
+                        v-for="symbol in pagedSymbols"
+                        :key="symbol"
                         :label="symbol"
-                        variant="ghost"
-                        color="neutral"
+                        :variant="kline.symbol === symbol ? 'subtle' : 'outline'"
+                        :color="kline.symbol === symbol ? 'primary' : 'neutral'"
                         @click="selectSymbol(symbol)"
                     />
                 </div>
@@ -93,9 +93,12 @@
         return filtered.slice(start, end);
     });
 
+    watch(modal, () => {
+        search.value = "";
+    });
+
     function selectSymbol(symbol: string) {
         modal.value = false;
-        search.value = "";
         if (kline.symbol === symbol) return;
         kline.symbol = symbol;
     }

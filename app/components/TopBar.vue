@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <div class="flex border-b border-b-muted overflow-x-auto">
+    <div class="border-b border-b-muted">
+        <div class="flex overflow-x-auto">
             <SymbolModal/>
             <div class="w-full flex items-center gap-2 p-2">
                 <UButton

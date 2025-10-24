@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-    import { init, dispose, registerOverlay } from "klinecharts";
+    import { init, dispose, registerOverlay, ActionType } from "klinecharts";
     import type { KLineData } from "klinecharts";
 
     const kline = useKlineStore();
@@ -107,11 +107,6 @@
                 console.error("WebSocket error: ", error);
             }
         };
-
-        ws.value.onclose = () => {
-            console.log("WebSocket connection closed, reconnecting...");
-            setTimeout(connectWebSocket, 3000);
-        };
     }
 
     onMounted(async () => {
@@ -119,6 +114,27 @@
 
         kline.chart = init(chartContainer.value);
         if (!kline.chart) return;
+
+        kline.chart.subscribeAction(ActionType.OnTooltipIconClick, data => {
+            if (kline.chart && data.iconId && data.indicatorName && data.paneId) {
+                switch (data.iconId) {
+                    case "settings":
+                        break;
+                    
+                    case "visible":
+                        kline.chart.overrideIndicator({ name: data.indicatorName, visible: true }, data.paneId);
+                        break;
+
+                    case "invisible":
+                        kline.chart.overrideIndicator({ name: data.indicatorName, visible: false }, data.paneId);
+                        break;
+                    
+                    case "remove":
+                        kline.chart.removeIndicator(data.paneId, data.indicatorName);
+                        break;
+                }
+            }
+        })
 
         resizeObserver.value = new ResizeObserver(() => {
             if (kline.chart) kline.chart.resize();

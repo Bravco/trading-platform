@@ -1,97 +1,99 @@
 <template>
-    <div class="flex flex-col gap-2 p-2 border-r border-r-muted overflow-y-auto">
-        <UTooltip
-            v-for="category in overlayCategories"
-            :key="category.name"
-            :delay-duration="0"
-            arrow
-            :content="{ side: 'right', align: 'start' }"
-            :ui="{ content: 'h-auto flex-col' }"
-            :disabled="category.options.length < 2"
-        >
-            <UButton
-                :icon="category.latest.value.icon"
-                :variant="drawingOverlayKey === category.latest.value.key ? 'soft' : 'ghost'"
-                :color="drawingOverlayKey === category.latest.value.key ? 'primary' : 'neutral'"
-                square
-                @click="addOverlay(category.latest.value)"
-            />
-            <template #content>
+    <div class="border-r border-r-muted">
+        <div class="flex flex-col gap-2 p-2 overflow-y-auto">
+            <UTooltip
+                v-for="category in overlayCategories"
+                :key="category.name"
+                :delay-duration="0"
+                arrow
+                :content="{ side: 'right', align: 'start' }"
+                :ui="{ content: 'h-auto flex-col' }"
+                :disabled="category.options.length < 2"
+            >
                 <UButton
-                    v-for="(option, index) in category.options"
-                    :key="index"
-                    :icon="option.icon"
-                    :label="option.label"
-                    :variant="drawingOverlayKey === option.key ? 'soft' : 'ghost'"
-                    :color="drawingOverlayKey === option.key ? 'primary' : 'neutral'"
+                    :icon="category.latest.value.icon"
+                    :variant="drawingOverlayKey === category.latest.value.key ? 'soft' : 'ghost'"
+                    :color="drawingOverlayKey === category.latest.value.key ? 'primary' : 'neutral'"
                     square
-                    :ui="{ base: 'w-full' }"
-                    @click="addOverlay(option)"
+                    @click="addOverlay(category.latest.value)"
                 />
-            </template>
-        </UTooltip>
-        <USeparator/>
-        <UTooltip
-            :delay-duration="0"
-            arrow
-            :content="{ side: 'right', align: 'start' }"
-            :ui="{ content: 'h-auto flex-col' }"
-        >
-            <UButton
-                icon="i-lucide-magnet"
-                :variant="mode === 'normal' ? 'ghost' : 'soft'"
-                :color="mode === 'normal' ? 'neutral' : 'primary'"
-                square
-                @click="clickMode"
-            />
-            <template #content>
+                <template #content>
+                    <UButton
+                        v-for="(option, index) in category.options"
+                        :key="index"
+                        :icon="option.icon"
+                        :label="option.label"
+                        :variant="drawingOverlayKey === option.key ? 'soft' : 'ghost'"
+                        :color="drawingOverlayKey === option.key ? 'primary' : 'neutral'"
+                        square
+                        :ui="{ base: 'w-full' }"
+                        @click="addOverlay(option)"
+                    />
+                </template>
+            </UTooltip>
+            <USeparator/>
+            <UTooltip
+                :delay-duration="0"
+                arrow
+                :content="{ side: 'right', align: 'start' }"
+                :ui="{ content: 'h-auto flex-col' }"
+            >
                 <UButton
-                    v-for="(subMode, index) in subModes"
-                    :key="index"
                     icon="i-lucide-magnet"
-                    :variant="mode === subMode.value ? 'soft' : 'ghost'"
-                    :color="mode === subMode.value ? 'primary' : 'neutral'"
-                    :label="subMode.label"
-                    :ui="{ base: 'w-full' }"
-                    @click="selectSubMode(subMode.value)"
+                    :variant="mode === 'normal' ? 'ghost' : 'soft'"
+                    :color="mode === 'normal' ? 'neutral' : 'primary'"
+                    square
+                    @click="clickMode"
                 />
-            </template>
-        </UTooltip>
-        <UButton
-            :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
-            :variant="lock ? 'soft' : 'ghost'"
-            :color="lock ? 'primary' : 'neutral'"
-            square
-            @click="toggleLock"
-        />
-        <UButton
-            :icon="visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
-            :variant="visible ? 'ghost' : 'soft'"
-            :color="visible ? 'neutral' : 'primary'"
-            square
-            @click="toggleVisibility"
-        />
-        <USeparator/>
-        <UButton
-            icon="i-lucide-trash"
-            variant="ghost"
-            color="neutral"
-            square
-            @click="removeOverlay"
-        />
+                <template #content>
+                    <UButton
+                        v-for="(subMode, index) in subModes"
+                        :key="index"
+                        icon="i-lucide-magnet"
+                        :variant="mode === subMode.value ? 'soft' : 'ghost'"
+                        :color="mode === subMode.value ? 'primary' : 'neutral'"
+                        :label="subMode.label"
+                        :ui="{ base: 'w-full' }"
+                        @click="selectSubMode(subMode.value)"
+                    />
+                </template>
+            </UTooltip>
+            <UButton
+                :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
+                :variant="lock ? 'soft' : 'ghost'"
+                :color="lock ? 'primary' : 'neutral'"
+                square
+                @click="toggleLock"
+            />
+            <UButton
+                :icon="visible ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+                :variant="visible ? 'ghost' : 'soft'"
+                :color="visible ? 'neutral' : 'primary'"
+                square
+                @click="toggleVisibility"
+            />
+            <USeparator/>
+            <UButton
+                icon="i-lucide-trash"
+                variant="ghost"
+                color="neutral"
+                square
+                @click="removeOverlay"
+            />
+        </div>
     </div>
 </template>
 
 <script lang="ts" setup>
     import type { OverlayMode, OverlayEvent } from "klinecharts";
 
-    interface OverlayOption {
+    type OverlayOption = {
         key: string,
         icon: string,
         label: string
     }
 
-    interface OverlayCategory {
+    type OverlayCategory = {
         name: string,
         options: OverlayOption[],
         latest: Ref<OverlayOption>
@@ -159,7 +161,7 @@
             visible: visible.value,
             lock: lock.value,
             mode: mode.value as OverlayMode,
-            onDrawStart: (event: OverlayEvent<any>) => {
+            onDrawStart: (event: OverlayEvent) => {
                 drawingOverlayKey.value = event.overlay.name;
                 return true;
             },
@@ -167,7 +169,7 @@
                 drawingOverlayKey.value = null
                 return true;
             },
-            onSelected: (event: OverlayEvent<any>) => {
+            onSelected: (event: OverlayEvent) => {
                 selectedOverlayId.value = event.overlay.id;
                 return true;
             },
