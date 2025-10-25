@@ -2,14 +2,14 @@
     <div>
         <NuxtRouteAnnouncer/>
         <UApp>
+            <IndicatorSettingsModal/>
             <UDashboardGroup>
                 <UDashboardPanel :ui="{ body: 'p-0 sm:p-0' }">
                     <template #body>
-                        <div class="w-full h-full flex flex-col">
+                        <div class="h-dvh flex flex-col">
                             <TopBar/>
-                            <div class="w-full h-full flex">
+                            <div class="h-full flex">
                                 <DrawingToolbar/>
-                                <IndicatorSettingsModal/>
                                 <div ref="chartContainer" class="w-full h-full"/>
                             </div>
                         </div>
