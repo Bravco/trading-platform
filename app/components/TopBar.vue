@@ -39,9 +39,12 @@
                 </UTooltip>
                 <USeparator orientation="vertical"/>
                 <IndicatorModal/>
-                <USeparator orientation="vertical"/>
+                <div class="w-full"/>
                 <TimezoneModal/>
-                <UColorModeButton class="ml-auto"/>
+                <USeparator orientation="vertical"/>
+                <ScreenshotModal/>
+                <USeparator orientation="vertical"/>
+                <UColorModeButton/>
             </div>
         </div>
     </div>
