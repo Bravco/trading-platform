@@ -10,6 +10,7 @@ export const useKlineStore = defineStore("kline", () => {
     const symbol = ref<string>("BTCUSDT");
     const interval = ref<string>("1m");
     const activeIndicators = ref<ActiveIndicator[]>([]);
+    const editedIndicator = ref<Nullable<ActiveIndicator>>(null);
 
-    return { chart, symbol, interval, activeIndicators };
+    return { chart, symbol, interval, activeIndicators, editedIndicator };
 });

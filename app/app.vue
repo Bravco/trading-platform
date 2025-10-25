@@ -9,6 +9,7 @@
                             <TopBar/>
                             <div class="w-full h-full flex">
                                 <DrawingToolbar/>
+                                <IndicatorSettingsModal/>
                                 <div ref="chartContainer" class="w-full h-full"/>
                             </div>
                         </div>
@@ -119,6 +120,10 @@
             if (kline.chart && data.iconId && data.indicatorName && data.paneId) {
                 switch (data.iconId) {
                     case "settings":
+                        kline.editedIndicator = {
+                            name: data.indicatorName,
+                            paneId: data.paneId
+                        };
                         break;
                     
                     case "visible":
@@ -131,6 +136,11 @@
                     
                     case "remove":
                         kline.chart.removeIndicator(data.paneId, data.indicatorName);
+                        const index = kline.activeIndicators.findIndex(i => 
+                            i.name === data.indicatorName
+                            && i.paneId === data.paneId
+                        );
+                        if (index !== -1) kline.activeIndicators.splice(index, 1);
                         break;
                 }
             }

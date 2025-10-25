@@ -93,8 +93,8 @@
         return filtered.slice(start, end);
     });
 
-    watch(modal, () => {
-        search.value = "";
+    watch(modal, (value) => {
+        if (value) search.value = "";
     });
 
     function selectSymbol(symbol: string) {

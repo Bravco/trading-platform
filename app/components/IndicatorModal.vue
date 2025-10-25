@@ -85,8 +85,8 @@
         indicator.label.toLowerCase().includes(search.value.toLowerCase())
     ));
 
-    watch(modal, () => {
-        search.value = "";
+    watch(modal, (value) => {
+        if (value) search.value = "";
     });
 
     function toggleIndicator(name: string, stackable: boolean) {
