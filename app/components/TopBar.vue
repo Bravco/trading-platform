@@ -2,7 +2,7 @@
     <div class="border-b border-b-muted">
         <div class="flex overflow-x-auto">
             <SymbolModal/>
-            <div class="w-full flex items-center gap-2 p-2">
+            <div class="flex items-center gap-2 p-2">
                 <UButton
                     v-for="(timeframe, index) in timeframes"
                     :key="index"
@@ -17,7 +17,7 @@
                 <USeparator orientation="vertical"/>
                 <IndicatorModal/>
                 <IndicatorSettingsModal/>
-                <div class="w-full"/>
+                <USeparator orientation="vertical"/>
                 <TimezoneModal/>
                 <USeparator orientation="vertical"/>
                 <ScreenshotModal/>

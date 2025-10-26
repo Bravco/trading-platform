@@ -3,14 +3,12 @@
         <NuxtRouteAnnouncer/>
         <UApp>
             <UDashboardGroup>
-                <UDashboardPanel :ui="{ body: 'p-0 sm:p-0' }">
+                <UDashboardPanel :ui="{ body: 'gap-0 sm:gap-0 p-0 sm:p-0 overflow-y-clip' }">
                     <template #body>
-                        <div class="h-dvh flex flex-col">
-                            <TopBar/>
-                            <div class="h-full flex">
-                                <DrawingToolbar/>
-                                <div ref="chartContainer" class="w-full h-full"/>
-                            </div>
+                        <TopBar/>
+                        <div class="h-full flex">
+                            <DrawingToolbar/>
+                            <div ref="chartContainer" class="w-full h-full"/>
                         </div>
                     </template>
                 </UDashboardPanel>
