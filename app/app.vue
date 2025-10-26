@@ -2,7 +2,6 @@
     <div>
         <NuxtRouteAnnouncer/>
         <UApp>
-            <IndicatorSettingsModal/>
             <UDashboardGroup>
                 <UDashboardPanel :ui="{ body: 'p-0 sm:p-0' }">
                     <template #body>

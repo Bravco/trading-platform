@@ -1,14 +1,10 @@
 <template>
     <div class="border-r border-r-muted">
         <div class="flex flex-col gap-2 p-2 overflow-y-auto">
-            <UTooltip
+            <div
                 v-for="category in overlayCategories"
                 :key="category.name"
-                :delay-duration="0"
-                arrow
-                :content="{ side: 'right', align: 'start' }"
-                :ui="{ content: 'h-auto flex-col' }"
-                :disabled="category.options.length < 2"
+                class="flex"
             >
                 <UButton
                     :icon="category.latest.value.icon"
@@ -17,27 +13,33 @@
                     square
                     @click="addOverlay(category.latest.value)"
                 />
-                <template #content>
+                <UPopover
+                    v-if="category.options.length > 1"
+                    arrow
+                    :content="{ side: 'right', align: 'start' }"
+                    :ui="{ content: 'flex flex-col' }"
+                >
                     <UButton
-                        v-for="(option, index) in category.options"
-                        :key="index"
-                        :icon="option.icon"
-                        :label="option.label"
-                        :variant="drawingOverlayKey === option.key ? 'soft' : 'ghost'"
-                        :color="drawingOverlayKey === option.key ? 'primary' : 'neutral'"
-                        square
-                        :ui="{ base: 'w-full' }"
-                        @click="addOverlay(option)"
+                        icon="i-lucide-chevron-right"
+                        variant="ghost"
+                        color="neutral"
+                        :ui="{ base: 'w-2 px-0 -mr-2', leadingIcon: 'size-2' }"
                     />
-                </template>
-            </UTooltip>
+                    <template #content>
+                        <UButton
+                            v-for="(option, index) in category.options"
+                            :key="index"
+                            :icon="option.icon"
+                            :label="option.label"
+                            :variant="drawingOverlayKey === option.key ? 'soft' : 'ghost'"
+                            :color="drawingOverlayKey === option.key ? 'primary' : 'neutral'"
+                            @click="addOverlay(option)"
+                        />
+                    </template>
+                </UPopover>
+            </div>
             <USeparator/>
-            <UTooltip
-                :delay-duration="0"
-                arrow
-                :content="{ side: 'right', align: 'start' }"
-                :ui="{ content: 'h-auto flex-col' }"
-            >
+            <div class="flex">
                 <UButton
                     icon="i-lucide-magnet"
                     :variant="mode === 'normal' ? 'ghost' : 'soft'"
@@ -45,19 +47,31 @@
                     square
                     @click="clickMode"
                 />
-                <template #content>
+                <UPopover
+                    arrow
+                    :content="{ side: 'right', align: 'start' }"
+                    :ui="{ content: 'flex flex-col' }"
+                >
                     <UButton
-                        v-for="(subMode, index) in subModes"
-                        :key="index"
-                        icon="i-lucide-magnet"
-                        :variant="mode === subMode.value ? 'soft' : 'ghost'"
-                        :color="mode === subMode.value ? 'primary' : 'neutral'"
-                        :label="subMode.label"
-                        :ui="{ base: 'w-full' }"
-                        @click="selectSubMode(subMode.value)"
+                        icon="i-lucide-chevron-right"
+                        variant="ghost"
+                        color="neutral"
+                        :ui="{ base: 'w-2 px-0 -mr-2', leadingIcon: 'size-2' }"
                     />
-                </template>
-            </UTooltip>
+                    <template #content>
+                        <UButton
+                            v-for="(subMode, index) in subModes"
+                            :key="index"
+                            icon="i-lucide-magnet"
+                            :variant="mode === subMode.value ? 'soft' : 'ghost'"
+                            :color="mode === subMode.value ? 'primary' : 'neutral'"
+                            :label="subMode.label"
+                            :ui="{ base: 'w-full' }"
+                            @click="selectSubMode(subMode.value)"
+                        />
+                    </template>
+                </UPopover>
+            </div>
             <UButton
                 :icon="lock ? 'i-lucide-lock' : 'i-lucide-lock-open'"
                 :variant="lock ? 'soft' : 'ghost'"
