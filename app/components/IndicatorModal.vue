@@ -102,31 +102,14 @@
 
         const paneId = kline.chart.createIndicator({
             name,
-            createTooltipDataSource: ({ indicator }) => ({
-                icons: [
-                    getIconStyle("settings", "\ue994"),
-                    indicator.visible
-                        ? getIconStyle("invisible", "\ue9ce")  
-                        : getIconStyle("visible", "\ue9d1"),
-                    getIconStyle("remove", "\ue9ac")
-                ]
-            }) as IndicatorTooltipData
+            createTooltipDataSource: ({ indicator, defaultStyles }) => {
+                const iconIds = [0, indicator.visible ? 1 : 2, 3];
+                const icons = iconIds.map(i => defaultStyles.tooltip.icons[i]);
+                return { icons } as IndicatorTooltipData;
+            }
         }, true, { id: stackable ? "candle_pane" : undefined });
         if (paneId) kline.activeIndicators.push({ name, paneId });
     }
-
-    const getIconStyle = (id: string, icon: string) => ({
-        id,
-        position: "middle",
-        marginRight: 8,
-        size: 14,
-        color: "#76808F",
-        activeColor: "#76808F",
-        backgroundColor: "transparent",
-        activeBackgroundColor: "rgba(22, 119, 255, 0.15)",
-        fontFamily: "icomoon",
-        icon
-    });
 
     const isIndicatorActive = (name: string): boolean => {
         return kline.activeIndicators.some(i => i.name === name);

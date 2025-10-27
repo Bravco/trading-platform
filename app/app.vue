@@ -23,6 +23,7 @@
 
     const kline = useKlineStore();
     const overlays = useOverlays();
+    const colorMode = useColorMode();
 
     const chartContainer = ref<HTMLDivElement | null>(null);
     const resizeObserver = ref<ResizeObserver | null>(null);
@@ -40,6 +41,12 @@
             connectWebSocket();
         }
     );
+
+    watch(() => colorMode.value, () => {
+        if (kline.chart) kline.chart.setStyles(kline.getThemeStyles());
+    });
+
+    
 
     async function fetchHistoricalData(limit = 1000) {
         if (import.meta.server) return [];
@@ -110,7 +117,7 @@
     onMounted(async () => {
         if (!chartContainer.value) return;
 
-        kline.chart = init(chartContainer.value);
+        kline.chart = init(chartContainer.value, { styles: kline.getThemeStyles() });
         if (!kline.chart) return;
 
         kline.chart.subscribeAction(ActionType.OnTooltipIconClick, data => {
