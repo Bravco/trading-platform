@@ -34,7 +34,7 @@
                     v-for="indicator in searchedIndicators"
                     :key="indicator.name"
                     :label="indicator.label"
-                    :variant="isIndicatorActive(indicator.name) ? 'subtle' : 'outline'"
+                    :variant="isIndicatorActive(indicator.name) ? 'solid' : 'outline'"
                     :color="isIndicatorActive(indicator.name) ? 'primary' : 'neutral'"
                     @click="toggleIndicator(indicator.name, indicator.stackable)"
                 />

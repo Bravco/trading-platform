@@ -6,11 +6,6 @@ const circle: OverlayTemplate = {
     needDefaultPointFigure: true,
     needDefaultXAxisFigure: true,
     needDefaultYAxisFigure: true,
-    styles: {
-        circle: {
-            color: "rgba(22, 119, 255, 0.15)"
-        }
-    },
     createPointFigures: ({ coordinates }) => {
         if (coordinates.length > 1 && coordinates[0] && coordinates[1]) {
             const radius = getDistance(coordinates[0], coordinates[1]);

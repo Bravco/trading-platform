@@ -30,8 +30,10 @@ export const useKlineStore = defineStore("kline", () => {
     });
 
     const getThemeStyles = (): DeepPartial<Styles> => {
-        const textColor = getCssVarColor("--ui-text-muted", colorMode.value === "dark" ? "#929AA5" : "#76808F");
-        const lineColor = getCssVarColor("--ui-border-muted", colorMode.value === "dark" ? "#555555" : "#dddddd");
+        const primaryColor = getCssVarColor("--ui-primary");
+        const primaryTransparentColor = getCssVarColor("--ui-primary", undefined, 0.15);
+        const textColor = getCssVarColor("--ui-text-muted");
+        const lineColor = getCssVarColor("--ui-border-muted");
         return {
             candle: {
                 priceMark: {
@@ -54,7 +56,29 @@ export const useKlineStore = defineStore("kline", () => {
                 tickLine: { color: lineColor },
                 axisLine: { color: lineColor }
             },
-            separator: { color: lineColor },
+            separator: { color: lineColor },            
+            overlay: {
+                text: {
+                    backgroundColor: primaryColor
+                },
+                point: {
+                    color: primaryColor,
+                    activeColor: primaryColor,
+                    borderColor: primaryTransparentColor,
+                    activeBorderColor: primaryTransparentColor
+                },
+                line: {
+                    color: primaryColor
+                },
+                circle: {
+                    color: primaryTransparentColor,
+                    borderColor: primaryColor
+                },
+                polygon: {
+                    color: primaryTransparentColor,
+                    borderColor: primaryColor
+                }
+            },
             indicator: {
                 tooltip: {
                     text: { color: textColor },

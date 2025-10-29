@@ -1,8 +1,10 @@
 <template>
-    <TopBar/>
-    <div class="h-full flex">
-        <DrawingToolbar/>
-        <div ref="chartContainer" class="w-full h-full"/>
+    <div class="w-full h-full flex flex-col">
+        <TopBar/>
+        <div class="w-full min-h-0 flex flex-1">
+            <DrawingToolbar/>
+            <div ref="chartContainer" class="w-full h-full"/>
+        </div>
     </div>
 </template>
 

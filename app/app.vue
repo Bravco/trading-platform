@@ -2,58 +2,37 @@
     <div>
         <NuxtRouteAnnouncer/>
         <UApp>
-            <UDashboardGroup>
-                <UDashboardPanel resizable :min-size="60" :max-size="80" :default-size="75" :ui="{ body: 'gap-0 sm:gap-0 p-0 sm:p-0' }">
-                    <template #header v-if="isMounted && isMobile">
-                        <UDashboardNavbar :toggle="false" :ui="{ root: 'px-0 sm:px-0', center: 'w-full flex' }">
-                            <UTabs
-                                v-model="currentTab"
-                                :items="tabs"
-                                :content="false"
-                                color="neutral"
-                                size="lg"
-                                class="w-full"
-                            />
-                        </UDashboardNavbar>
-                    </template>
-                    <template #body>
-                        <KeepAlive>
-                            <Chart v-if="currentTab === 'chart'"/>
-                            <Watchlist v-else-if="currentTab === 'watchlist'"/>
-                        </KeepAlive>
-                    </template>
-                </UDashboardPanel>
-                <UDashboardPanel v-if="isMounted && !isMobile" :ui="{ body: 'gap-0 sm:gap-0 p-0 sm:p-0' }">
-                    <template #body>
-                        <Watchlist/>
-                    </template>
-                </UDashboardPanel>
-            </UDashboardGroup>
+            <div class="min-h-svh fixed inset-0 p-4 bg-muted">
+                <SplitterGroup direction="vertical">
+                    <SplitterPanel>
+                        <SplitterGroup direction="horizontal">
+                            <SplitterPanel :default-size="75" class="bg-default border border-muted rounded-lg">
+                                <Chart/>
+                            </SplitterPanel>
+                            <SplitterResizeHandle class="grid place-items-center">
+                                <UIcon name="i-lucide-grip-vertical"/>
+                            </SplitterResizeHandle>
+                            <SplitterPanel class="bg-default border border-muted rounded-lg">
+                                <Watchlist/>
+                            </SplitterPanel>
+                        </SplitterGroup>
+                    </SplitterPanel>
+                    <SplitterResizeHandle class="grid place-items-center">
+                        <UIcon name="i-lucide-grip-horizontal"/>
+                    </SplitterResizeHandle>
+                    <SplitterPanel :default-size="25" class="bg-default p-2 border border-muted rounded-lg">
+                        
+                    </SplitterPanel>
+                </SplitterGroup>
+            </div>
         </UApp>
     </div>
 </template>
 
 <script setup lang="ts">
     import { registerOverlay } from "klinecharts";
-    import { breakpointsTailwind } from "@vueuse/core";
-    import type { TabsItem } from "@nuxt/ui";
-    
-    const overlays = useOverlays();
 
-    const isMounted = ref<boolean>(false);
-    const isMobile = useBreakpoints(breakpointsTailwind).smaller("lg");
-    const currentTab = ref<string>("chart");
-    const tabs = ref<TabsItem[]>([
-        { icon: "i-lucide-candlestick-chart", label: "Chart", value: "chart" },
-        { icon: "i-lucide-clipboard-list", label: "Watchlist", value: "watchlist" },
-        { icon: "i-lucide-dollar-sign", label: "Trades", value: "trades" }
-    ]);
+    const overlays = useOverlays();
     
     overlays.forEach(overlay => registerOverlay(overlay));
-
-    watch(isMobile, (value) => {
-        if (!value) currentTab.value = "chart";
-    });
-
-    onMounted(() => isMounted.value = true);
 </script>
