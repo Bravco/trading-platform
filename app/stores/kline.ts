@@ -10,8 +10,9 @@ export const useKlineStore = defineStore("kline", () => {
     const colorMode = useColorMode();
 
     const chart = ref<Nullable<Chart>>(null);
-    const symbol = ref<string>("BTCUSDT");
     const interval = ref<string>("1m");
+    const symbol = ref<string>("BTCUSDT");
+    const favouriteSymbols = ref<string[]>([]);
     const activeIndicators = ref<ActiveIndicator[]>([]);
     const editedIndicator = ref<Nullable<ActiveIndicator>>(null);
 
@@ -68,5 +69,5 @@ export const useKlineStore = defineStore("kline", () => {
         };
     }
 
-    return { chart, symbol, interval, activeIndicators, editedIndicator, getThemeStyles };
+    return { chart, interval, symbol, favouriteSymbols, activeIndicators, editedIndicator, getThemeStyles };
 });

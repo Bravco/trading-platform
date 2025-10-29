@@ -3,7 +3,7 @@
         <NuxtRouteAnnouncer/>
         <UApp>
             <UDashboardGroup>
-                <UDashboardPanel resizable :min-size="60" :max-size="85" :default-size="80" :ui="{ body: 'gap-0 sm:gap-0 p-0 sm:p-0' }">
+                <UDashboardPanel resizable :min-size="60" :max-size="80" :default-size="75" :ui="{ body: 'gap-0 sm:gap-0 p-0 sm:p-0' }">
                     <template #header v-if="isMounted && isMobile">
                         <UDashboardNavbar :toggle="false" :ui="{ root: 'px-0 sm:px-0', center: 'w-full flex' }">
                             <UTabs
@@ -50,6 +50,10 @@
     ]);
     
     overlays.forEach(overlay => registerOverlay(overlay));
+
+    watch(isMobile, (value) => {
+        if (!value) currentTab.value = "chart";
+    });
 
     onMounted(() => isMounted.value = true);
 </script>
