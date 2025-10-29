@@ -30,7 +30,7 @@
 
     watch(modal, (value) => {
         if (!value || !kline.chart) return;
-        url.value = kline.chart.getConvertPictureUrl(true, "png");
+        url.value = kline.chart.getConvertPictureUrl(true, "png", getCssVarColor("--ui-bg", "white"));
     });
 
     function downloadImage() {

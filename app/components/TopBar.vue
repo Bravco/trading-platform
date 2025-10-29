@@ -1,29 +1,28 @@
 <template>
     <div class="border-b border-b-muted">
-        <div class="flex overflow-x-auto">
-            <SymbolModal/>
-            <div class="flex items-center gap-2 p-2">
-                <UButton
-                    v-for="(timeframe, index) in timeframes"
-                    :key="index"
-                    :label="timeframe"
-                    :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
-                    color="neutral"
-                    square
-                    @click="selectTimeframe(timeframe)"
-                />
-                <USeparator orientation="vertical"/>
-                <CandleTypePopover/>
-                <USeparator orientation="vertical"/>
-                <IndicatorModal/>
-                <IndicatorSettingsModal/>
-                <USeparator orientation="vertical"/>
-                <TimezoneModal/>
-                <USeparator orientation="vertical"/>
-                <ScreenshotModal/>
-                <USeparator orientation="vertical"/>
-                <UColorModeButton/>
-            </div>
+        <div class="h-full flex items-center gap-2 p-2 overflow-x-auto">
+            <span class="font-medium">{{ kline.symbol }}</span>
+            <USeparator orientation="vertical"/>
+            <UButton
+                v-for="(timeframe, index) in timeframes"
+                :key="index"
+                :label="timeframe"
+                :variant="kline.interval === timeframe ? 'soft' : 'ghost'"
+                color="neutral"
+                square
+                @click="selectTimeframe(timeframe)"
+            />
+            <USeparator orientation="vertical"/>
+            <CandleTypePopover/>
+            <USeparator orientation="vertical"/>
+            <IndicatorModal/>
+            <IndicatorSettingsModal/>
+            <USeparator orientation="vertical"/>
+            <TimezoneModal/>
+            <USeparator orientation="vertical"/>
+            <ScreenshotModal/>
+            <USeparator orientation="vertical"/>
+            <UColorModeButton/>
         </div>
     </div>
 </template>
