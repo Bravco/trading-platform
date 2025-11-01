@@ -53,8 +53,10 @@
                 :items-per-page="itemsPerPage"
                 :total="searchedSymbols.length"
                 :sibling-count="1"
+                active-color="neutral"
             />
         </div>
+        <Trade/>
     </div>
 </template>
 

@@ -6,15 +6,22 @@ type ActiveIndicator = {
     paneId: string
 };
 
-export const useKlineStore = defineStore("kline", () => {
-    const colorMode = useColorMode();
+type Order = {
+    symbol: string
+    direction: "buy" | "sell",
+    price: number,
+    size: number,
+    timestamp: number
+};
 
+export const useKlineStore = defineStore("kline", () => {
     const chart = ref<Nullable<Chart>>(null);
     const interval = ref<string>("1m");
     const symbol = ref<string>("BTCUSDT");
     const favouriteSymbols = ref<string[]>([]);
     const activeIndicators = ref<ActiveIndicator[]>([]);
     const editedIndicator = ref<Nullable<ActiveIndicator>>(null);
+    const orders = ref<Order[]>([]);
 
     const getIconStyle = (id: string, icon: string, color: string): DeepPartial<TooltipIconStyle> => ({
         id,
@@ -93,5 +100,7 @@ export const useKlineStore = defineStore("kline", () => {
         };
     }
 
-    return { chart, interval, symbol, favouriteSymbols, activeIndicators, editedIndicator, getThemeStyles };
+    return {
+        chart, interval, symbol, favouriteSymbols, activeIndicators, editedIndicator, getThemeStyles, orders
+    };
 });
