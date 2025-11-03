@@ -20,12 +20,9 @@
 
     async function buy() {
         if (isLoading.value) return;
-
         try {
             isLoading.value = true;
-
             const { askPrice } = await getBidAsk();
-
             const price = parseFloat(askPrice);
 
             kline.orders.push({
@@ -42,8 +39,6 @@
                     extendData: { direction: "buy", price }
                 });
             }
-        } catch (e) {
-            console.error(e);
         } finally {
             isLoading.value = false;
         }
@@ -51,12 +46,9 @@
 
     async function sell() {
         if (isLoading.value) return;
-
         try {
             isLoading.value = true;
-
             const { bidPrice } = await getBidAsk();
-
             const price = parseFloat(bidPrice);
 
             kline.orders.push({
@@ -73,10 +65,14 @@
                     extendData: { direction: "sell", price }
                 });
             }
-        } catch (e) {
-            console.error(e);
         } finally {
             isLoading.value = false;
         }
     }
+
+    onUnmounted(() => {
+        kline.orders.forEach(o => {
+            kline.disconnectSymbol(o.symbol);
+        });
+    });
 </script>
