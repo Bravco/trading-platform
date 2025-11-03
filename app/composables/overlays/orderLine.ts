@@ -9,10 +9,8 @@ const orderLine: OverlayTemplate = {
     zLevel: 100,
     createPointFigures: ({ overlay, bounding, yAxis }) => {
         const { price, direction } = overlay.extendData;
-
         const y = yAxis?.convertToPixel(price);
         const color = direction === "buy" ? "#2DC08E" : "#F92855";
-
         return [
             {
                 type: "line",
@@ -26,6 +24,11 @@ const orderLine: OverlayTemplate = {
                 styles: { color }
             }
         ];
+    },
+    onDrawStart: (event) => {
+        // @ts-ignore
+        event.overlay.forceComplete();
+        return true;
     }
 };
 

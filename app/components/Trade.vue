@@ -36,7 +36,8 @@
             if (kline.chart) {
                 kline.chart.createOverlay({
                     name: "orderLine",
-                    extendData: { direction: "buy", price }
+                    extendData: { direction: "buy", price },
+                    points: [{}]
                 });
             }
         } finally {
@@ -62,7 +63,8 @@
             if (kline.chart) {
                 kline.chart.createOverlay({
                     name: "orderLine",
-                    extendData: { direction: "sell", price }
+                    extendData: { direction: "sell", price },
+                    points: [{}]
                 });
             }
         } finally {
@@ -71,8 +73,6 @@
     }
 
     onUnmounted(() => {
-        kline.orders.forEach(o => {
-            kline.disconnectSymbol(o.symbol);
-        });
+        kline.orders.forEach(o => kline.disconnectSymbol(o.symbol));
     });
 </script>

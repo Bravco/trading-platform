@@ -33,6 +33,6 @@
     import { registerOverlay } from "klinecharts";
 
     const overlays = useOverlays();
-    
+
     overlays.forEach(overlay => registerOverlay(overlay));
 </script>

@@ -17,18 +17,19 @@
     const chartContainer = ref<HTMLDivElement | null>(null);
     const resizeObserver = ref<ResizeObserver | null>(null);
 
-    watch(() => kline.symbol, async (newSymbol, oldSymbol) => {
-        if (!kline.chart) return;
+    watch(
+        () => [kline.symbol, kline.interval],
+        async ([newSymbol, _newInterval], [oldSymbol, _oldInterval]) => {
+            if (!kline.chart) return;
+            
+            if (oldSymbol !== newSymbol && kline.orders.findIndex(o => o.symbol === oldSymbol) === -1)
+                kline.disconnectSymbol(oldSymbol!);
 
-        
-        if (oldSymbol !== newSymbol && kline.orders.findIndex(o => o.symbol === oldSymbol) === -1) {
-            kline.disconnectSymbol(oldSymbol);
+            const data = await kline.fetchHistoricalData(newSymbol!);
+            kline.chart.applyNewData(data);
+            kline.connectSymbol(newSymbol!);
         }
-
-        const data = await kline.fetchHistoricalData(newSymbol);
-        kline.chart.applyNewData(data);
-        kline.connectSymbol(newSymbol);
-    });
+    );
 
     watch(() => colorMode.value, () => {
         if (kline.chart) kline.chart.setStyles(kline.getThemeStyles());

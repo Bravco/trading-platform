@@ -30,9 +30,7 @@
         {
             accessorKey: "price",
             header: "Entry Price",
-            cell: ({ row }) => {
-                return `${(row.getValue("price") as number).toFixed(2)} $`;
-            }
+            cell: ({ row }) => `${(row.getValue("price") as number).toFixed(2)} $`
         },
         {
             accessorKey: "direction",
@@ -52,7 +50,8 @@
         },
         {
             accessorKey: "size",
-            header: "Position Size"
+            header: "Position Size",
+            cell: ({ row }) => (row.getValue("size") as number).toFixed(2)
         },
         {
             accessorKey: "pnl",
@@ -77,17 +76,15 @@
         },
         {
             id: "actions",
+            header: "Actions",
             cell: ({ row }) => {
                 return h(
                     UButton,
                     {
-                        icon: "i-lucide-circle-x",
+                        icon: "i-lucide-x",
                         variant: "ghost",
                         color: "neutral",
-                        class: "ml-auto",
-                        onClick: () => {
-                            kline.orders.splice(row.index, 1);
-                        }
+                        onClick: () => kline.orders.splice(row.index, 1)
                     }
                 );
             }
