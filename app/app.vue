@@ -20,7 +20,7 @@
                     <SplitterResizeHandle class="grid place-items-center">
                         <UIcon name="i-lucide-grip-horizontal"/>
                     </SplitterResizeHandle>
-                    <SplitterPanel :default-size="25" class="flex bg-default p-2 border border-muted rounded-lg">
+                    <SplitterPanel :default-size="25" class="bg-default border border-muted rounded-lg">
                         <Positions/>
                     </SplitterPanel>
                 </SplitterGroup>

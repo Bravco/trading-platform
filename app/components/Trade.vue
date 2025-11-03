@@ -7,6 +7,8 @@
 </template>
 
 <script lang="ts" setup>
+    import type { Nullable } from 'klinecharts';
+    
     const kline = useKlineStore();
 
     const positionSize = ref<number>(0.01);
@@ -24,22 +26,24 @@
             isLoading.value = true;
             const { askPrice } = await getBidAsk();
             const price = parseFloat(askPrice);
-
-            kline.orders.push({
+            const order: Order = {
                 symbol: kline.symbol,
                 direction: "buy",
                 price,
                 size: positionSize.value,
                 timestamp: Date.now()
-            });
+            };
 
             if (kline.chart) {
-                kline.chart.createOverlay({
+                const id = kline.chart.createOverlay({
                     name: "orderLine",
                     extendData: { direction: "buy", price },
                     points: [{}]
-                });
+                }) as Nullable<string>;
+                order.orderLineId = id;
             }
+
+            kline.orders.push(order);
         } finally {
             isLoading.value = false;
         }
@@ -51,28 +55,30 @@
             isLoading.value = true;
             const { bidPrice } = await getBidAsk();
             const price = parseFloat(bidPrice);
-
-            kline.orders.push({
+            const order: Order = {
                 symbol: kline.symbol,
                 direction: "sell",
                 price,
                 size: positionSize.value,
                 timestamp: Date.now()
-            });
+            };
 
             if (kline.chart) {
-                kline.chart.createOverlay({
+                const id = kline.chart.createOverlay({
                     name: "orderLine",
                     extendData: { direction: "sell", price },
                     points: [{}]
-                });
+                }) as Nullable<string>;
+                order.orderLineId = id;
             }
+
+            kline.orders.push(order);
         } finally {
             isLoading.value = false;
         }
     }
 
     onUnmounted(() => {
-        kline.orders.forEach(o => kline.disconnectSymbol(o.symbol));
+        kline.orders.forEach((o: Order) => kline.disconnectSymbol(o.symbol));
     });
 </script>

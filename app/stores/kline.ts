@@ -1,19 +1,6 @@
 import { TooltipIconPosition } from "klinecharts";
 import type { Nullable, Chart, Styles, DeepPartial, TooltipIconStyle, KLineData } from "klinecharts";
 
-type ActiveIndicator = {
-    name: string,
-    paneId: string
-};
-
-type Order = {
-    symbol: string
-    direction: "buy" | "sell",
-    price: number,
-    size: number,
-    timestamp: number
-};
-
 export const useKlineStore = defineStore("kline", {
     state: () => ({
         chart: null as Nullable<Chart>,
@@ -24,7 +11,8 @@ export const useKlineStore = defineStore("kline", {
         editedIndicator: null as Nullable<ActiveIndicator>,
         orders: [] as Order[],
         websockets: {} as Record<string, WebSocket>,
-        prices: {} as Record<string, number>
+        prices: {} as Record<string, number>,
+        balance: 10000 as number
     }),
     actions: {
         getIconStyle(id: string, icon: string, color: string): DeepPartial<TooltipIconStyle> {

@@ -1,20 +1,46 @@
 <template>
-    <UTable
-        :data="kline.orders"
-        :columns="columns"
-        class="flex-1"
-        empty="You have no positions opened."
-    />
+    <div class="flex-1">
+        <UTabs :items="tabs" variant="link" color="neutral">
+            <template #positions>
+                <UTable
+                    :data="kline.orders"
+                    :columns="columns"
+                    class="flex-1"
+                    empty="You have no positions opened."
+                />
+            </template>
+            <template #list-trailing>
+                <div class="flex gap-4 items-center ml-auto px-2">
+                    <div>
+                        <span class="text-sm text-muted">Balance: </span>
+                        <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
+                    </div>
+                    <div>
+                        <span class="text-sm text-muted">Equity: </span>
+                        <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
+                    </div>
+                </div>
+            </template>
+        </UTabs>
+    </div>
 </template>
 
 <script lang="ts" setup>
-    import type { TableColumn } from "@nuxt/ui";
+    import type { TabsItem, TableColumn } from "@nuxt/ui";
 
     const kline = useKlineStore();
     
     const UBadge = resolveComponent("UBadge");
     const UButton = resolveComponent("UButton");
     
+    const tabs = ref<TabsItem[]>([
+        {
+            label: "Positions",
+            icon: "i-lucide-dollar-sign",
+            slot: "positions" as const
+        }
+    ]);
+
     const columns: TableColumn<any>[] = [
         {
             accessorKey: "symbol",
@@ -84,7 +110,15 @@
                         icon: "i-lucide-x",
                         variant: "ghost",
                         color: "neutral",
-                        onClick: () => kline.orders.splice(row.index, 1)
+                        onClick: () => {
+                            const order: Order | undefined = kline.orders[row.index];
+
+                            if (kline.chart && order?.orderLineId) {
+                                kline.chart.removeOverlay({ id: order.orderLineId });
+                            }
+                                
+                            kline.orders.splice(row.index, 1);
+                        }
                     }
                 );
             }
