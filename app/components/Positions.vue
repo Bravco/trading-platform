@@ -1,28 +1,37 @@
 <template>
-    <div class="flex-1">
-        <UTabs :items="tabs" variant="link" color="neutral">
-            <template #positions>
-                <UTable
-                    :data="kline.orders"
-                    :columns="columns"
-                    class="flex-1"
-                    empty="You have no positions opened."
-                />
-            </template>
-            <template #list-trailing>
-                <div class="flex gap-4 items-center ml-auto px-2">
-                    <div>
-                        <span class="text-sm text-muted">Balance: </span>
-                        <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
-                    </div>
-                    <div>
-                        <span class="text-sm text-muted">Equity: </span>
-                        <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
-                    </div>
+    <UTabs :items="tabs" variant="link" color="neutral" class="h-full" :ui="{ content: 'h-full flex' }">
+        <template #positions>
+            <UTable
+                :data="kline.orders"
+                :columns="columns"
+                sticky="header"
+                class="flex-1"
+                empty="You have no positions opened."
+            />
+        </template>
+        <template #list-trailing>
+            <div class="flex gap-4 items-center ml-auto px-2">
+                <div>
+                    <span class="text-sm text-muted">Balance: </span>
+                    <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
                 </div>
-            </template>
-        </UTabs>
-    </div>
+                <div>
+                    <span class="text-sm text-muted">Open P&L: </span>
+                    <span
+                        class="font-medium"
+                        :class="{
+                            'text-success': openPnl > 0,
+                            'text-error': openPnl < 0
+                        }"
+                    >{{ `${openPnl >= 0 ? "+" : ""}${openPnl.toFixed(2)} $` }}</span>
+                </div>
+                <div>
+                    <span class="text-sm text-muted">Equity: </span>
+                    <span class="font-medium">{{ equity.toFixed(2) }} $</span>
+                </div>
+            </div>
+        </template>
+    </UTabs>
 </template>
 
 <script lang="ts" setup>
@@ -92,7 +101,6 @@
                 const pnl = (currentPrice - entryPrice) * size * (direction === "buy" ? 1 : -1);
                 const colorClass = pnl === 0 ? "" : (pnl > 0 ? "text-success" : "text-error");
 
-
                 return h(
                     "span",
                     { class: `font-semibold ${colorClass}` },
@@ -113,6 +121,12 @@
                         onClick: () => {
                             const order: Order | undefined = kline.orders[row.index];
 
+                            if (order) {
+                                const currentPrice = kline.prices[order.symbol] ?? order.price;
+                                const pnl = (currentPrice - order.price) * order.size * (order.direction === "buy" ? 1 : -1);
+                                kline.balance += pnl;
+                            }
+
                             if (kline.chart && order?.orderLineId) {
                                 kline.chart.removeOverlay({ id: order.orderLineId });
                             }
@@ -124,4 +138,18 @@
             }
         }
     ];
+
+    const openPnl = computed(() => {
+        let totalPnl = 0;
+
+        for (const order of kline.orders) {
+            const currentPrice = kline.prices[order.symbol] ?? order.price;
+            const pnl = (currentPrice - order.price) * order.size * (order.direction === "buy" ? 1 : -1);
+            totalPnl += pnl;
+        }
+
+        return totalPnl;
+    });
+
+    const equity = computed(() => kline.balance + openPnl.value);
 </script>
