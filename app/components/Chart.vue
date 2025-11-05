@@ -37,7 +37,19 @@
 
     onMounted(async () => {
         if (!chartContainer.value) return;
+
+        // Hiding klinecharts welcome message
+        const originalLog = console.log;
+        console.log = (...args) => {
+            if (typeof args[0] === 'string' && args[0].includes('Welcome to klinecharts')) return;
+            if (typeof args[0] === 'string' && args[0].includes('Version is')) return;
+            originalLog(...args);
+        };
+
         kline.chart = init(chartContainer.value, { styles: kline.getThemeStyles() });
+
+        // Restore console.log
+        console.log = originalLog;
 
         if (!kline.chart) return;
         kline.chart.subscribeAction(ActionType.OnTooltipIconClick, data => {
