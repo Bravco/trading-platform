@@ -6,12 +6,20 @@ declare global {
         paneId: string
     };
 
-    type Order = {
-        symbol: string
+    type Position = {
+        symbol: string,
         direction: "buy" | "sell",
         price: number,
         size: number,
         timestamp: number,
-        orderLineId?: Nullable<string>
+        entryLineId?: Nullable<string>
+    };
+
+    type PendingOrder = {
+        symbol: string,
+        direction: "buy" | "sell",
+        price: number,
+        size: number,
+        pendingEntryLineId?: Nullable<string>
     };
 }

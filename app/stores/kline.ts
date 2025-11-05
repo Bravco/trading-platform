@@ -9,7 +9,8 @@ export const useKlineStore = defineStore("kline", {
         favouriteSymbols: [] as string[],
         activeIndicators: [] as ActiveIndicator[],
         editedIndicator: null as Nullable<ActiveIndicator>,
-        orders: [] as Order[],
+        positions: [] as Position[],
+        pendingOrders: [] as PendingOrder[],
         websockets: {} as Record<string, WebSocket>,
         prices: {} as Record<string, number>,
         balance: 10000 as number
@@ -38,7 +39,8 @@ export const useKlineStore = defineStore("kline", {
                 candle: {
                     priceMark: {
                         high: { color: textColor },
-                        low: { color: textColor }
+                        low: { color: textColor },
+                        last: { line: { dashedValue: [2, 2] } }
                     },
                     tooltip: { text: { color: textColor } }
                 },

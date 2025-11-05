@@ -1,54 +1,20 @@
 <template>
-    <UTabs :items="tabs" variant="link" color="neutral" class="h-full" :ui="{ content: 'h-full flex' }">
-        <template #positions>
-            <UTable
-                :data="kline.orders"
-                :columns="columns"
-                sticky="header"
-                class="flex-1"
-                empty="You have no positions opened."
-            />
-        </template>
-        <template #list-trailing>
-            <div class="flex gap-4 items-center ml-auto px-2">
-                <div>
-                    <span class="text-sm text-muted">Balance: </span>
-                    <span class="font-medium">{{ kline.balance.toFixed(2) }} $</span>
-                </div>
-                <div>
-                    <span class="text-sm text-muted">Open P&L: </span>
-                    <span
-                        class="font-medium"
-                        :class="{
-                            'text-success': openPnl > 0,
-                            'text-error': openPnl < 0
-                        }"
-                    >{{ `${openPnl >= 0 ? "+" : ""}${openPnl.toFixed(2)} $` }}</span>
-                </div>
-                <div>
-                    <span class="text-sm text-muted">Equity: </span>
-                    <span class="font-medium">{{ equity.toFixed(2) }} $</span>
-                </div>
-            </div>
-        </template>
-    </UTabs>
+    <UTable
+        :data="kline.positions"
+        :columns="columns"
+        sticky="header"
+        class="flex-1"
+        empty="You have no opened positions."
+    />
 </template>
 
 <script lang="ts" setup>
-    import type { TabsItem, TableColumn } from "@nuxt/ui";
+    import type { TableColumn } from "@nuxt/ui";
 
     const kline = useKlineStore();
-    
+
     const UBadge = resolveComponent("UBadge");
     const UButton = resolveComponent("UButton");
-    
-    const tabs = ref<TabsItem[]>([
-        {
-            label: "Positions",
-            icon: "i-lucide-dollar-sign",
-            slot: "positions" as const
-        }
-    ]);
 
     const columns: TableColumn<any>[] = [
         {
@@ -119,37 +85,23 @@
                         variant: "ghost",
                         color: "neutral",
                         onClick: () => {
-                            const order: Order | undefined = kline.orders[row.index];
+                            const position: Position | undefined = kline.positions[row.index];
 
-                            if (order) {
-                                const currentPrice = kline.prices[order.symbol] ?? order.price;
-                                const pnl = (currentPrice - order.price) * order.size * (order.direction === "buy" ? 1 : -1);
+                            if (position) {
+                                const currentPrice = kline.prices[position.symbol] ?? position.price;
+                                const pnl = (currentPrice - position.price) * position.size * (position.direction === "buy" ? 1 : -1);
                                 kline.balance += pnl;
                             }
 
-                            if (kline.chart && order?.orderLineId) {
-                                kline.chart.removeOverlay({ id: order.orderLineId });
+                            if (kline.chart && position?.entryLineId) {
+                                kline.chart.removeOverlay({ id: position.entryLineId });
                             }
                                 
-                            kline.orders.splice(row.index, 1);
+                            kline.positions.splice(row.index, 1);
                         }
                     }
                 );
             }
         }
     ];
-
-    const openPnl = computed(() => {
-        let totalPnl = 0;
-
-        for (const order of kline.orders) {
-            const currentPrice = kline.prices[order.symbol] ?? order.price;
-            const pnl = (currentPrice - order.price) * order.size * (order.direction === "buy" ? 1 : -1);
-            totalPnl += pnl;
-        }
-
-        return totalPnl;
-    });
-
-    const equity = computed(() => kline.balance + openPnl.value);
 </script>

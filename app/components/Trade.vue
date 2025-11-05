@@ -27,7 +27,7 @@
         </div>
         <div v-else class="flex flex-col gap-2 p-2 border-t border-muted">
             <UFormField label="Price" :ui="{ label: 'text-xs text-muted' }">
-                <UInputNumber v-model="pendingPrice" :disabled="isMarket" :format-options="{ minimumFractionDigits: 2 }" color="neutral" class="w-full"/>
+                <UInputNumber v-model="pendingPrice" :disabled="isMarket" :min="0" :format-options="{ minimumFractionDigits: 2 }" color="neutral" class="w-full"/>
             </UFormField>
             <UTabs
                 v-model="direction"
@@ -97,6 +97,7 @@
 
         if (isMarket.value) {
             kline.chart.removeOverlay({ name: "pendingLine" });
+            pendingLineId.value = null;
         } else {
             pendingLineId.value = kline.chart.createOverlay({
                 name: "pendingLine",
@@ -133,10 +134,10 @@
         };
     }
 
-    function buy() {
+    function marketBuy() {
         if (!ask.value) return;
 
-        const order: Order = {
+        const order: Position = {
             symbol: kline.symbol,
             direction: "buy",
             price: ask.value,
@@ -145,20 +146,20 @@
         };
 
         if (kline.chart) {
-            order.orderLineId =  kline.chart.createOverlay({
-                name: "orderLine",
+            order.entryLineId =  kline.chart.createOverlay({
+                name: "entryLine",
                 extendData: { direction: "buy", price: ask.value },
                 points: [{}]
             }) as Nullable<string>;
         }
 
-        kline.orders.push(order);
+        kline.positions.push(order);
     }
 
-    function sell() {
+    function marketSell() {
         if (!bid.value) return;
 
-        const order: Order = {
+        const order: Position = {
             symbol: kline.symbol,
             direction: "sell",
             price: bid.value,
@@ -167,23 +168,65 @@
         };
 
         if (kline.chart) {
-            order.orderLineId = kline.chart.createOverlay({
-                name: "orderLine",
+            order.entryLineId = kline.chart.createOverlay({
+                name: "entryLine",
                 extendData: { direction: "sell", price: bid.value },
                 points: [{}]
             }) as Nullable<string>;
         }
 
-        kline.orders.push(order);
+        kline.positions.push(order);
+    }
+
+    function pendingOrder() {
+        const order: PendingOrder = {
+            symbol: kline.symbol,
+            direction: direction.value,
+            price: pendingPrice.value,
+            size: size.value
+        };
+
+        if (kline.chart) {
+            order.pendingEntryLineId = kline.chart.createOverlay({
+                name: "pendingEntryLine",
+                extendData: { direction: direction.value, price: pendingPrice.value },
+                points: [{}]
+            }) as Nullable<string>;
+
+            if (pendingLineId.value) {
+                kline.chart.removeOverlay({ name: "pendingLine" });
+                pendingLineId.value = null;
+            }
+        }
+
+        kline.pendingOrders.push(order);
+    }
+
+    function buy() {
+        if (isMarket.value) marketBuy();
+        else pendingOrder();
+        isMarket.value = true;
+    }
+
+    function sell() {
+        if (isMarket.value) marketSell();
+        else pendingOrder();
+        isMarket.value = true;
     }
 
     function execute() {
-        if (direction.value === "buy") buy();
-        else sell();
+        if (isMarket.value) {
+            if (direction.value === "buy") marketBuy();
+            else marketSell();
+        } else {
+            pendingOrder();
+        }
+
+        isMarket.value = true;
     }
 
     onUnmounted(() => {
-        kline.orders.forEach((o: Order) => kline.disconnectSymbol(o.symbol));
+        kline.positions.forEach((o: Position) => kline.disconnectSymbol(o.symbol));
         
         if (ws.value) {
             ws.value.close();

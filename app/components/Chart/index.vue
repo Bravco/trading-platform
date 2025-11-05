@@ -1,8 +1,8 @@
 <template>
     <div class="w-full h-full flex flex-col">
-        <TopBar/>
+        <ChartTopBar/>
         <div class="w-full min-h-0 flex flex-1">
-            <DrawingToolbar/>
+            <ChartDrawingToolbar/>
             <div ref="chartContainer" class="w-full h-full"/>
         </div>
     </div>
@@ -22,7 +22,7 @@
         async ([newSymbol, _newInterval], [oldSymbol, _oldInterval]) => {
             if (!kline.chart) return;
             
-            if (oldSymbol !== newSymbol && kline.orders.findIndex(o => o.symbol === oldSymbol) === -1)
+            if (oldSymbol !== newSymbol && kline.positions.findIndex(o => o.symbol === oldSymbol) === -1)
                 kline.disconnectSymbol(oldSymbol!);
 
             const data = await kline.fetchHistoricalData(newSymbol!);

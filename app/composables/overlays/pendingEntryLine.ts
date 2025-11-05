@@ -1,7 +1,7 @@
 import type { OverlayTemplate } from "klinecharts";
 
-const orderLine: OverlayTemplate = {
-    name: "orderLine",
+const pendingEntryLine: OverlayTemplate = {
+    name: "pendingEntryLine",
     totalStep: 0,
     needDefaultPointFigure: false,
     needDefaultXAxisFigure: false,
@@ -21,7 +21,7 @@ const orderLine: OverlayTemplate = {
                         { x: bounding.width, y }
                     ]
                 },
-                styles: { color, size: 2 }
+                styles: { color, size: 2, style: "dashed", dashedValue: [4, 4] }
             }
         ];
     },
@@ -32,4 +32,4 @@ const orderLine: OverlayTemplate = {
     }
 };
 
-export default orderLine;
+export default pendingEntryLine;

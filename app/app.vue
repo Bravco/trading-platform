@@ -21,7 +21,7 @@
                         <UIcon name="i-lucide-grip-horizontal"/>
                     </SplitterResizeHandle>
                     <SplitterPanel :default-size="25" class="bg-default border border-muted rounded-lg">
-                        <Positions/>
+                        <OrderPanel/>
                     </SplitterPanel>
                 </SplitterGroup>
             </div>
