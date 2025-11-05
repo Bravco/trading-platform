@@ -7,25 +7,28 @@
                 size="sm"
                 variant="outline"
                 color="neutral"
-                @click="isMarket = !isMarket"
+                @click="switchOrderType"
             />
             <UButton
                 :icon="collapsed ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
                 size="sm"
-                variant="soft"
+                :variant="collapsed ? 'soft' : 'solid'"
                 color="neutral"
-                @click="collapsed = !collapsed"
+                @click="collapsed = !collapsed;"
             />
         </div>
         <div v-if="collapsed" class="grid grid-cols-[1fr_2fr_1fr] gap-2 p-2 border-t border-muted">
             <span class="text-start mt-auto text-xs text-success font-medium">{{ ask?.toFixed(2) }}</span>
             <span class="text-center mt-auto text-xs text-muted font-medium">Margin</span>
             <span class="text-end mt-auto text-xs text-error font-medium">{{ bid?.toFixed(2) }}</span>
-            <UButton @click="buy" :disabled="isLoading" label="BUY" color="success" :ui="{ base: 'justify-center' }"/>
+            <UButton @click="buy" label="BUY" color="success" :ui="{ base: 'justify-center' }"/>
             <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" color="neutral"/>
-            <UButton @click="sell" :disabled="isLoading" label="SELL" color="error" :ui="{ base: 'justify-center' }"/>
+            <UButton @click="sell" label="SELL" color="error" :ui="{ base: 'justify-center' }"/>
         </div>
         <div v-else class="flex flex-col gap-2 p-2 border-t border-muted">
+            <UFormField label="Price" :ui="{ label: 'text-xs text-muted' }">
+                <UInputNumber v-model="pendingPrice" :disabled="isMarket" :format-options="{ minimumFractionDigits: 2 }" color="neutral" class="w-full"/>
+            </UFormField>
             <UTabs
                 v-model="direction"
                 :items="directionItems"
@@ -33,9 +36,9 @@
                 :ui="{ root: 'gap-0' }"
             />
             <span class="text-center text-xs text-muted font-medium">Margin</span>
-            <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" color="neutral"/>
+            <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" :format-options="{ minimumFractionDigits: 2 }" color="neutral"/>
             <UButton
-                :label="`Execute ${direction.toUpperCase()} ${size} @ ${(direction === 'buy' ? ask : bid)?.toFixed(2)}`"
+                :label="`Execute ${direction.toUpperCase()} ${size.toFixed(2)} @ ${(direction === 'buy' ? ask : bid)?.toFixed(2)}`"
                 :color="direction === 'buy' ? 'success' : 'error'"
                 class="justify-center"
                 @click="execute"
@@ -45,7 +48,7 @@
 </template>
 
 <script lang="ts" setup>
-    import type { Nullable } from 'klinecharts';
+    import type { Nullable } from "klinecharts";
     import type { TabsItem } from "@nuxt/ui";
     
     const kline = useKlineStore();
@@ -53,9 +56,10 @@
     const ws = ref<Nullable<WebSocket>>(null);
     const bid = ref<Nullable<number>>(null);
     const ask = ref<Nullable<number>>(null);
-    const isLoading = ref<boolean>(false);
     const collapsed = ref<boolean>(true);
     const isMarket = ref<boolean>(true);
+    const pendingPrice = ref<Nullable<number>>(0);
+    const pendingLineId = ref<Nullable<string>>(null);
     const size = ref<number>(0.01);
     const direction = ref<"buy" | "sell">("buy");
 
@@ -64,10 +68,35 @@
         { label: "SELL", value: "sell" }
     ];
 
-    watch(() => kline.symbol, (newSymbol, oldSymbol) => {
+    watch(() => kline.symbol, (newSymbol, _oldSymbol) => {
         if (!newSymbol) return;
         initBookTickerStream();
     }, { immediate: true });
+
+    watch(pendingPrice, (newPrice, _oldPrice) => {
+        if (newPrice && kline.chart && pendingLineId.value) {
+            kline.chart.overrideOverlay({
+                id: pendingLineId.value,
+                points: [{ value: newPrice }]
+            });
+        }
+    });
+
+    function switchOrderType() {
+        isMarket.value = !isMarket.value;
+        if (!isMarket.value && kline.chart) {
+            const id = kline.chart.createOverlay({
+                name: "pendingLine",
+                points: [{ value: pendingPrice.value ?? kline.prices[kline.symbol] }],
+                onPressedMoveEnd: (event) => {
+                    const v = event.overlay.points[0]?.value ?? event.overlay.extendData.price;
+                    if (v) pendingPrice.value = parseFloat(v.toFixed(2));
+                    return true;
+                }
+            }) as Nullable<string>;
+            pendingLineId.value = id;
+        }
+    }
 
     function initBookTickerStream() {
         if (ws.value) {
@@ -83,64 +112,59 @@
                 const data = JSON.parse(event.data);
                 bid.value = parseFloat(data.b);
                 ask.value = parseFloat(data.a);
+                if (pendingPrice.value === 0) {
+                    pendingPrice.value = direction.value === "buy" ? ask.value : bid.value;
+                }
             } catch (e) {
                 console.error("Failed to parse bookTicker data:", e);
             }
         };
     }
 
-    async function buy() {
-        if (isLoading.value || !ask.value) return;
-        try {
-            isLoading.value = true;
-            const order: Order = {
-                symbol: kline.symbol,
-                direction: "buy",
-                price: ask.value,
-                size: size.value,
-                timestamp: Date.now()
-            };
+    function buy() {
+        if (!ask.value) return;
 
-            if (kline.chart) {
-                const id = kline.chart.createOverlay({
-                    name: "orderLine",
-                    extendData: { direction: "buy", price: ask.value },
-                    points: [{}]
-                }) as Nullable<string>;
-                order.orderLineId = id;
-            }
+        const order: Order = {
+            symbol: kline.symbol,
+            direction: "buy",
+            price: ask.value,
+            size: size.value,
+            timestamp: Date.now()
+        };
 
-            kline.orders.push(order);
-        } finally {
-            isLoading.value = false;
+        if (kline.chart) {
+            const id = kline.chart.createOverlay({
+                name: "orderLine",
+                extendData: { direction: "buy", price: ask.value },
+                points: [{}]
+            }) as Nullable<string>;
+            order.orderLineId = id;
         }
+
+        kline.orders.push(order);
     }
 
-    async function sell() {
-        if (isLoading.value || !bid.value) return;
-        try {
-            isLoading.value = true;
-            const order: Order = {
-                symbol: kline.symbol,
-                direction: "sell",
-                price: bid.value,
-                size: size.value,
-                timestamp: Date.now()
-            };
+    function sell() {
+        if (!bid.value) return;
 
-            if (kline.chart) {
-                const id = kline.chart.createOverlay({
-                    name: "orderLine",
-                    extendData: { direction: "sell", price: bid.value },
-                    points: [{}]
-                }) as Nullable<string>;
-                order.orderLineId = id;
-            }
+        const order: Order = {
+            symbol: kline.symbol,
+            direction: "sell",
+            price: bid.value,
+            size: size.value,
+            timestamp: Date.now()
+        };
 
-            kline.orders.push(order);
-        } finally {
-            isLoading.value = false;
+        if (kline.chart) {
+            const id = kline.chart.createOverlay({
+                name: "orderLine",
+                extendData: { direction: "sell", price: bid.value },
+                points: [{}]
+            }) as Nullable<string>;
+            order.orderLineId = id;
         }
+
+        kline.orders.push(order);
     }
 
     function execute() {
