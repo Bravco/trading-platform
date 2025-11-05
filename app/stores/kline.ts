@@ -125,6 +125,51 @@ export const useKlineStore = defineStore("kline", {
                 if (stream.endsWith("@trade")) {
                     const price = parseFloat(data.p);
                     this.prices[symbol] = price;
+                    
+                    /*this.pendingOrders.map(o => {
+                        if (o.symbol !== symbol) return;
+
+                        const shouldMarketBuy = o.direction === "buy" && (
+                            (o.orderType === "limit" && o.price >= price
+                            || o.orderType === "stop" && o.price <= price)
+                        );
+
+                        const shouldMarketSell = o.direction === "sell" && (
+                            (o.orderType === "limit" && o.price <= price
+                             || o.orderType === "stop" && o.price >= price)
+                        );
+
+                        if (shouldMarketBuy) {
+                            const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}`;
+                            fetch(url).then(res => res.json()).then(data => {
+                                const ask = parseFloat(data.askPrice);
+                                this.marketBuy(symbol, ask, o.size);
+
+                                if (this.chart && o.pendingEntryLineId) {
+                                    this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                                }
+                                
+                                const index = this.pendingOrders.indexOf(o);
+                                if (index !== -1) this.pendingOrders.splice(index, 1);
+                            }).catch(e => console.error("Error fetching bid/ask:", e));
+                        } else if (shouldMarketSell) {
+                            const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}`;
+                            fetch(url).then(res => res.json()).then(data => {
+                                const bid = parseFloat(data.bidPrice);
+                                this.marketBuy(symbol, bid, o.size);
+
+                                const ask = parseFloat(data.askPrice);
+                                this.marketBuy(symbol, ask, o.size);
+
+                                if (this.chart && o.pendingEntryLineId) {
+                                    this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                                }
+                                
+                                const index = this.pendingOrders.indexOf(o);
+                                if (index !== -1) this.pendingOrders.splice(index, 1);
+                            }).catch(e => console.error("Error fetching bid/ask:", e));
+                        }
+                    });*/
                 }
 
                 if (stream.includes("@kline_")) {
@@ -158,6 +203,43 @@ export const useKlineStore = defineStore("kline", {
                 ws.close();
                 delete this.websockets[symbol];
             }
+        },
+        marketBuy(symbol: string, ask: number, size: number) {
+            const position: Position = {
+                symbol,
+                direction: "buy",
+                price: ask,
+                size,
+                timestamp: Date.now()
+            };
+
+            if (this.chart) {
+                position.entryLineId = this.chart.createOverlay({
+                    name: "entryLine",
+                    extendData: { direction: "buy", price: ask }
+                }) as Nullable<string>;
+            }
+
+            this.positions.push(position);
+        },
+        marketSell(symbol: string, bid: number, size: number) {
+            const position: Position = {
+                symbol,
+                direction: "sell",
+                price: bid,
+                size,
+                timestamp: Date.now()
+            };
+
+            if (this.chart) {
+                position.entryLineId = this.chart.createOverlay({
+                    name: "entryLine",
+                    extendData: { direction: "sell", price: bid },
+                    points: [{}]
+                }) as Nullable<string>;
+            }
+
+            this.positions.push(position);
         }
     }
 });

@@ -134,54 +134,15 @@
         };
     }
 
-    function marketBuy() {
-        if (!ask.value) return;
-
-        const order: Position = {
-            symbol: kline.symbol,
-            direction: "buy",
-            price: ask.value,
-            size: size.value,
-            timestamp: Date.now()
-        };
-
-        if (kline.chart) {
-            order.entryLineId =  kline.chart.createOverlay({
-                name: "entryLine",
-                extendData: { direction: "buy", price: ask.value },
-                points: [{}]
-            }) as Nullable<string>;
-        }
-
-        kline.positions.push(order);
-    }
-
-    function marketSell() {
-        if (!bid.value) return;
-
-        const order: Position = {
-            symbol: kline.symbol,
-            direction: "sell",
-            price: bid.value,
-            size: size.value,
-            timestamp: Date.now()
-        };
-
-        if (kline.chart) {
-            order.entryLineId = kline.chart.createOverlay({
-                name: "entryLine",
-                extendData: { direction: "sell", price: bid.value },
-                points: [{}]
-            }) as Nullable<string>;
-        }
-
-        kline.positions.push(order);
-    }
-
-    function pendingOrder() {
+    function pendingOrder(direction: "buy" | "sell") {
+        const price = kline.prices[kline.symbol] ?? pendingPrice.value;
+        const orderType = direction === "buy"
+            ? price > pendingPrice.value ? "limit" : "stop"
+            : price > pendingPrice.value ? "limit" : "stop";
         const order: PendingOrder = {
             symbol: kline.symbol,
-            direction: direction.value,
+            direction,
+            orderType: orderType,
             price: pendingPrice.value,
             size: size.value
         };
@@ -189,7 +150,7 @@
         if (kline.chart) {
             order.pendingEntryLineId = kline.chart.createOverlay({
                 name: "pendingEntryLine",
-                extendData: { direction: direction.value, price: pendingPrice.value },
+                extendData: { direction, price: pendingPrice.value },
                 points: [{}]
             }) as Nullable<string>;
 
@@ -203,23 +164,32 @@
     }
 
     function buy() {
-        if (isMarket.value) marketBuy();
-        else pendingOrder();
+        if (isMarket.value && ask.value) {
+            kline.marketBuy(kline.symbol, ask.value, size.value);
+        } else if (!isMarket.value) {
+            pendingOrder("buy");
+        }
         isMarket.value = true;
     }
 
     function sell() {
-        if (isMarket.value) marketSell();
-        else pendingOrder();
+        if (isMarket.value && bid.value) {
+            kline.marketSell(kline.symbol, bid.value, size.value);
+        } else if (!isMarket.value) {
+            pendingOrder("sell");
+        }
         isMarket.value = true;
     }
 
     function execute() {
         if (isMarket.value) {
-            if (direction.value === "buy") marketBuy();
-            else marketSell();
+            if (direction.value === "buy" && ask.value) {
+                kline.marketBuy(kline.symbol, ask.value, size.value);
+            } else if (direction.value === "sell" && bid.value) {
+                kline.marketSell(kline.symbol, bid.value, size.value);
+            }
         } else {
-            pendingOrder();
+            pendingOrder(direction.value);
         }
 
         isMarket.value = true;

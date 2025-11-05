@@ -18,6 +18,7 @@ declare global {
     type PendingOrder = {
         symbol: string,
         direction: "buy" | "sell",
+        orderType: "limit" | "stop",
         price: number,
         size: number,
         pendingEntryLineId?: Nullable<string>

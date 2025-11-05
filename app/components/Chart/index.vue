@@ -22,8 +22,11 @@
         async ([newSymbol, _newInterval], [oldSymbol, _oldInterval]) => {
             if (!kline.chart) return;
             
-            if (oldSymbol !== newSymbol && kline.positions.findIndex(o => o.symbol === oldSymbol) === -1)
+            if (oldSymbol !== newSymbol
+                && kline.positions.findIndex(p => p.symbol === oldSymbol) === -1
+                && kline.pendingOrders.findIndex(o => o.symbol === oldSymbol) === -1) {
                 kline.disconnectSymbol(oldSymbol!);
+            }
 
             const data = await kline.fetchHistoricalData(newSymbol!);
             kline.chart.applyNewData(data);
