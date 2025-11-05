@@ -17,10 +17,12 @@ const pendingLine: OverlayTemplate = {
                         { x: 0, y },
                         { x: bounding.width, y }
                     ]
-                }
+                },
+                styles: { color: "#2196F3", size: 2 }
             }
         ];
-    }
+    },
+    onRightClick: () => true
 };
 
 export default pendingLine;

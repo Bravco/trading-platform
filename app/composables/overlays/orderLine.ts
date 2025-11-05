@@ -21,7 +21,7 @@ const orderLine: OverlayTemplate = {
                         { x: bounding.width, y }
                     ]
                 },
-                styles: { color }
+                styles: { color, size: 2 }
             }
         ];
     },

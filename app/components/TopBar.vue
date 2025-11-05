@@ -21,8 +21,6 @@
             <TimezoneModal/>
             <USeparator orientation="vertical"/>
             <ScreenshotModal/>
-            <USeparator orientation="vertical"/>
-            <UColorModeButton/>
         </div>
     </div>
 </template>

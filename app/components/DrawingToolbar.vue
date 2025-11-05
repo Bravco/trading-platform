@@ -88,11 +88,18 @@
             />
             <USeparator/>
             <UButton
-                icon="i-lucide-trash"
+                icon="i-lucide-delete"
                 variant="ghost"
                 color="neutral"
                 square
                 @click="removeOverlay"
+            />
+            <UButton
+                icon="i-lucide-trash"
+                variant="ghost"
+                color="neutral"
+                square
+                @click="removeAllOverlays"
             />
         </div>
     </div>
@@ -171,6 +178,7 @@
         if (category) category.latest.value = option;
 
         kline.chart.createOverlay({
+            groupId: "drawings",
             name: option.key,
             visible: visible.value,
             lock: lock.value,
@@ -200,27 +208,44 @@
         } else {
             mode.value = "weak_magnet";
         }
-        kline.chart?.overrideOverlay({ mode: mode.value as OverlayMode });
+
+        kline.chart?.overrideOverlay({ 
+            groupId: "drawings",
+            mode: mode.value as OverlayMode
+        });
     }
 
     function selectSubMode(value: string) {
         mode.value = value;
-        kline.chart?.overrideOverlay({ mode: value as OverlayMode });
+        kline.chart?.overrideOverlay({
+            groupId: "drawings",
+            mode: value as OverlayMode
+        });
     }
 
     function toggleLock() {
         lock.value = !lock.value;
-        kline.chart?.overrideOverlay({ lock: lock.value });
+        kline.chart?.overrideOverlay({
+            groupId: "drawings",
+            lock: lock.value
+        });
     }
 
     function toggleVisibility() {
         visible.value = !visible.value;
-        kline.chart?.overrideOverlay({ visible: visible.value });
+        kline.chart?.overrideOverlay({
+            groupId: "drawings",
+            visible: visible.value
+        });
     }
 
     function removeOverlay() {
         if (selectedOverlayId.value) {
             kline.chart?.removeOverlay({ id: selectedOverlayId.value });
         }
+    }
+
+    function removeAllOverlays() {
+        kline.chart?.removeOverlay({ groupId: "drawings" });
     }
 </script>

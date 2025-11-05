@@ -23,6 +23,7 @@
                 :color="favourite ? 'primary' : 'neutral'"
                 @click="favourite = !favourite"
             />
+            <UColorModeSwitch color="neutral" size="xl" class="my-auto"/>
         </div>
         <div class="h-full flex flex-col gap-2 p-2 overflow-y-auto">
             <div

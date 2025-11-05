@@ -22,7 +22,7 @@
             <span class="text-center mt-auto text-xs text-muted font-medium">Margin</span>
             <span class="text-end mt-auto text-xs text-error font-medium">{{ bid?.toFixed(2) }}</span>
             <UButton @click="buy" label="BUY" color="success" :ui="{ base: 'justify-center' }"/>
-            <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" color="neutral"/>
+            <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" :format-options="{ minimumFractionDigits: 2 }" color="neutral"/>
             <UButton @click="sell" label="SELL" color="error" :ui="{ base: 'justify-center' }"/>
         </div>
         <div v-else class="flex flex-col gap-2 p-2 border-t border-muted">
@@ -38,7 +38,7 @@
             <span class="text-center text-xs text-muted font-medium">Margin</span>
             <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" :format-options="{ minimumFractionDigits: 2 }" color="neutral"/>
             <UButton
-                :label="`Execute ${direction.toUpperCase()} ${size.toFixed(2)} @ ${(direction === 'buy' ? ask : bid)?.toFixed(2)}`"
+                :label="executeLabel"
                 :color="direction === 'buy' ? 'success' : 'error'"
                 class="justify-center"
                 @click="execute"
@@ -58,15 +58,23 @@
     const ask = ref<Nullable<number>>(null);
     const collapsed = ref<boolean>(true);
     const isMarket = ref<boolean>(true);
-    const pendingPrice = ref<Nullable<number>>(0);
+    const pendingPrice = ref<number>(0);
     const pendingLineId = ref<Nullable<string>>(null);
-    const size = ref<number>(0.01);
+    const size = ref<number>(0.1);
     const direction = ref<"buy" | "sell">("buy");
 
     const directionItems: TabsItem[] = [
         { label: "BUY", value: "buy" },
         { label: "SELL", value: "sell" }
     ];
+
+    const executeLabel = computed(() => {
+        const price = (isMarket.value
+            ? direction.value === 'buy' ? ask.value : bid.value
+            : pendingPrice.value)?.toFixed(2) ?? 0;
+
+        return `Execute ${direction.value.toUpperCase()} ${size.value.toFixed(2)} @ ${price}`;
+    });
 
     watch(() => kline.symbol, (newSymbol, _oldSymbol) => {
         if (!newSymbol) return;
@@ -84,17 +92,21 @@
 
     function switchOrderType() {
         isMarket.value = !isMarket.value;
-        if (!isMarket.value && kline.chart) {
-            const id = kline.chart.createOverlay({
+
+        if (!kline.chart) return;
+
+        if (isMarket.value) {
+            kline.chart.removeOverlay({ name: "pendingLine" });
+        } else {
+            pendingLineId.value = kline.chart.createOverlay({
                 name: "pendingLine",
-                points: [{ value: pendingPrice.value ?? kline.prices[kline.symbol] }],
+                points: [{ value: pendingPrice.value }],
                 onPressedMoveEnd: (event) => {
                     const v = event.overlay.points[0]?.value ?? event.overlay.extendData.price;
                     if (v) pendingPrice.value = parseFloat(v.toFixed(2));
                     return true;
                 }
             }) as Nullable<string>;
-            pendingLineId.value = id;
         }
     }
 
@@ -133,12 +145,11 @@
         };
 
         if (kline.chart) {
-            const id = kline.chart.createOverlay({
+            order.orderLineId =  kline.chart.createOverlay({
                 name: "orderLine",
                 extendData: { direction: "buy", price: ask.value },
                 points: [{}]
             }) as Nullable<string>;
-            order.orderLineId = id;
         }
 
         kline.orders.push(order);
@@ -156,12 +167,11 @@
         };
 
         if (kline.chart) {
-            const id = kline.chart.createOverlay({
+            order.orderLineId = kline.chart.createOverlay({
                 name: "orderLine",
                 extendData: { direction: "sell", price: bid.value },
                 points: [{}]
             }) as Nullable<string>;
-            order.orderLineId = id;
         }
 
         kline.orders.push(order);
@@ -169,7 +179,7 @@
 
     function execute() {
         if (direction.value === "buy") buy();
-        else if (direction.value === "sell") sell();
+        else sell();
     }
 
     onUnmounted(() => {
