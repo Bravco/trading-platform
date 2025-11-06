@@ -13,6 +13,7 @@ export const useKlineStore = defineStore("kline", {
         pendingOrders: [] as PendingOrder[],
         websockets: {} as Record<string, WebSocket>,
         prices: {} as Record<string, number>,
+        //bookTickers: {} as Record<string, { bid: number, ask: number }>,
         balance: 10000 as number
     }),
     actions: {
@@ -126,50 +127,39 @@ export const useKlineStore = defineStore("kline", {
                     const price = parseFloat(data.p);
                     this.prices[symbol] = price;
                     
-                    /*this.pendingOrders.map(o => {
+                    this.pendingOrders.map(o => {
                         if (o.symbol !== symbol) return;
 
                         const shouldMarketBuy = o.direction === "buy" && (
-                            (o.orderType === "limit" && o.price >= price
-                            || o.orderType === "stop" && o.price <= price)
+                            (o.orderType === "limit" && o.price >= price)
+                            || (o.orderType === "stop" && o.price <= price)
                         );
 
                         const shouldMarketSell = o.direction === "sell" && (
-                            (o.orderType === "limit" && o.price <= price
-                             || o.orderType === "stop" && o.price >= price)
+                            (o.orderType === "limit" && o.price <= price)
+                            || (o.orderType === "stop" && o.price >= price)
                         );
 
                         if (shouldMarketBuy) {
-                            const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}`;
-                            fetch(url).then(res => res.json()).then(data => {
-                                const ask = parseFloat(data.askPrice);
-                                this.marketBuy(symbol, ask, o.size);
+                            this.marketBuy(symbol, price, o.size);
 
-                                if (this.chart && o.pendingEntryLineId) {
-                                    this.chart.removeOverlay({ id: o.pendingEntryLineId });
-                                }
-                                
-                                const index = this.pendingOrders.indexOf(o);
-                                if (index !== -1) this.pendingOrders.splice(index, 1);
-                            }).catch(e => console.error("Error fetching bid/ask:", e));
+                            if (this.chart && o.pendingEntryLineId) {
+                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                            }
+
+                            const index = this.pendingOrders.indexOf(o);
+                            if (index !== -1) this.pendingOrders.splice(index, 1);
                         } else if (shouldMarketSell) {
-                            const url = `https://api.binance.com/api/v3/ticker/bookTicker?symbol=${symbol}`;
-                            fetch(url).then(res => res.json()).then(data => {
-                                const bid = parseFloat(data.bidPrice);
-                                this.marketBuy(symbol, bid, o.size);
+                            this.marketSell(symbol, price, o.size);
 
-                                const ask = parseFloat(data.askPrice);
-                                this.marketBuy(symbol, ask, o.size);
+                            if (this.chart && o.pendingEntryLineId) {
+                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                            }
 
-                                if (this.chart && o.pendingEntryLineId) {
-                                    this.chart.removeOverlay({ id: o.pendingEntryLineId });
-                                }
-                                
-                                const index = this.pendingOrders.indexOf(o);
-                                if (index !== -1) this.pendingOrders.splice(index, 1);
-                            }).catch(e => console.error("Error fetching bid/ask:", e));
+                            const index = this.pendingOrders.indexOf(o);
+                            if (index !== -1) this.pendingOrders.splice(index, 1);
                         }
-                    });*/
+                    });
                 }
 
                 if (stream.includes("@kline_")) {

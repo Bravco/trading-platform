@@ -7,7 +7,7 @@
                 size="sm"
                 variant="outline"
                 color="neutral"
-                @click="switchOrderType"
+                @click="toggleIsMarket"
             />
             <UButton
                 :icon="collapsed ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
@@ -90,7 +90,7 @@
         }
     });
 
-    function switchOrderType() {
+    function toggleIsMarket() {
         isMarket.value = !isMarket.value;
 
         if (!kline.chart) return;
@@ -138,11 +138,11 @@
         const price = kline.prices[kline.symbol] ?? pendingPrice.value;
         const orderType = direction === "buy"
             ? price > pendingPrice.value ? "limit" : "stop"
-            : price > pendingPrice.value ? "limit" : "stop";
+            : price < pendingPrice.value ? "limit" : "stop";
         const order: PendingOrder = {
             symbol: kline.symbol,
             direction,
-            orderType: orderType,
+            orderType,
             price: pendingPrice.value,
             size: size.value
         };
