@@ -36,14 +36,14 @@
 
     const kline = useKlineStore();
     
-    const tabs = ref<TabsItem[]>([
+    const tabs = computed<TabsItem[]>(() => [
         {
-            label: "Positions",
+            label: `Positions (${kline.positions.length})`,
             icon: "i-lucide-dollar-sign",
             slot: "positions" as const
         },
         {
-            label: "Pending",
+            label: `Pending (${kline.pendingOrders.length})`,
             icon: "i-lucide-hourglass",
             slot: "pending" as const
         }
