@@ -32,7 +32,38 @@
 <script setup lang="ts">
     import { registerOverlay } from "klinecharts";
 
-    const overlays = useOverlays();
+    const kline = useKlineStore();
 
+    const overlays = useOverlays();
     overlays.forEach(overlay => registerOverlay(overlay));
+
+    watch(() => kline.symbol, (newSymbol, oldSymbol) => {
+        if (oldSymbol === newSymbol) return;
+
+        if (oldSymbol) {
+            if (kline.pendingOrders.findIndex(o => o.symbol === oldSymbol) === -1) {
+                kline.disconnectBookTicker(oldSymbol);
+            }
+            if (kline.positions.findIndex(p => p.symbol === oldSymbol) === -1) {
+                kline.disconnectPrice(oldSymbol);
+            }
+        }
+
+        kline.connectBookTicker(newSymbol);
+        kline.connectPrice(newSymbol);
+    });
+
+    watch(() => kline.interval, () => kline.connectPrice(kline.symbol));
+
+    onMounted(() => {
+        kline.connectPrice(kline.symbol);
+        kline.connectBookTicker(kline.symbol);
+    });
+
+    onUnmounted(() => {
+        kline.disconnectPrice(kline.symbol);
+        kline.disconnectBookTicker(kline.symbol);
+        kline.positions.forEach((p: Position) => kline.disconnectPrice(p.symbol));
+        kline.pendingOrders.forEach((o: PendingOrder) => kline.disconnectBookTicker(o.symbol));
+    });
 </script>

@@ -17,22 +17,11 @@
     const chartContainer = ref<HTMLDivElement | null>(null);
     const resizeObserver = ref<ResizeObserver | null>(null);
 
-    watch(
-        () => [kline.symbol, kline.interval],
-        async ([newSymbol, _newInterval], [oldSymbol, _oldInterval]) => {
-            if (!kline.chart) return;
-            
-            if (oldSymbol !== newSymbol
-                && kline.positions.findIndex(p => p.symbol === oldSymbol) === -1
-                && kline.pendingOrders.findIndex(o => o.symbol === oldSymbol) === -1) {
-                kline.disconnectSymbol(oldSymbol!);
-            }
-
-            const data = await kline.fetchHistoricalData(newSymbol!);
-            kline.chart.applyNewData(data);
-            kline.connectSymbol(newSymbol!);
-        }
-    );
+    watch(() => [kline.symbol, kline.interval], async () => {
+        if (!kline.chart) return;
+        const data = await kline.fetchHistoricalData(kline.symbol);
+        kline.chart.applyNewData(data);
+    });
 
     watch(() => colorMode.value, () => {
         if (kline.chart) kline.chart.setStyles(kline.getThemeStyles());
@@ -92,12 +81,10 @@
 
         const data = await kline.fetchHistoricalData(kline.symbol);
         kline.chart.applyNewData(data);
-        kline.connectSymbol(kline.symbol);
     });
 
     onUnmounted(() => {
         resizeObserver.value?.disconnect();
-        kline.disconnectSymbol(kline.symbol);
         if (chartContainer.value) dispose(chartContainer.value);
     });
 </script>

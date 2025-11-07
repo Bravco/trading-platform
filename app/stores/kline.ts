@@ -11,9 +11,10 @@ export const useKlineStore = defineStore("kline", {
         editedIndicator: null as Nullable<ActiveIndicator>,
         positions: [] as Position[],
         pendingOrders: [] as PendingOrder[],
-        websockets: {} as Record<string, WebSocket>,
+        pricesWebsockets: {} as Record<string, WebSocket>,
         prices: {} as Record<string, number>,
-        //bookTickers: {} as Record<string, { bid: number, ask: number }>,
+        bookTickerWebsockets: {} as Record<string, WebSocket>,
+        bookTickers: {} as Record<string, { bid: number, ask: number }>,
         balance: 10000 as number
     }),
     actions: {
@@ -111,12 +112,12 @@ export const useKlineStore = defineStore("kline", {
 
             return data;
         },
-        connectSymbol(symbol: string) {
-            if (this.websockets[symbol]) this.disconnectSymbol(symbol);
+        connectPrice(symbol: string) {
+            if (this.pricesWebsockets[symbol]) this.disconnectPrice(symbol);
 
             const url = `wss://stream.binance.com:9443/stream?streams=${symbol.toLowerCase()}@trade/${symbol.toLowerCase()}@kline_${this.interval}`;
             const ws = new WebSocket(url);
-            this.websockets[symbol] = ws;
+            this.pricesWebsockets[symbol] = ws;
 
             ws.onmessage = (event) => {
                 const payload = JSON.parse(event.data);
@@ -126,40 +127,6 @@ export const useKlineStore = defineStore("kline", {
                 if (stream.endsWith("@trade")) {
                     const price = parseFloat(data.p);
                     this.prices[symbol] = price;
-                    
-                    this.pendingOrders.map(o => {
-                        if (o.symbol !== symbol) return;
-
-                        const shouldMarketBuy = o.direction === "buy" && (
-                            (o.orderType === "limit" && o.price >= price)
-                            || (o.orderType === "stop" && o.price <= price)
-                        );
-
-                        const shouldMarketSell = o.direction === "sell" && (
-                            (o.orderType === "limit" && o.price <= price)
-                            || (o.orderType === "stop" && o.price >= price)
-                        );
-
-                        if (shouldMarketBuy) {
-                            this.marketBuy(symbol, price, o.size);
-
-                            if (this.chart && o.pendingEntryLineId) {
-                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
-                            }
-
-                            const index = this.pendingOrders.indexOf(o);
-                            if (index !== -1) this.pendingOrders.splice(index, 1);
-                        } else if (shouldMarketSell) {
-                            this.marketSell(symbol, price, o.size);
-
-                            if (this.chart && o.pendingEntryLineId) {
-                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
-                            }
-
-                            const index = this.pendingOrders.indexOf(o);
-                            if (index !== -1) this.pendingOrders.splice(index, 1);
-                        }
-                    });
                 }
 
                 if (stream.includes("@kline_")) {
@@ -180,25 +147,95 @@ export const useKlineStore = defineStore("kline", {
             };
 
             ws.onclose = () => {
-                delete this.websockets[symbol];
+                delete this.pricesWebsockets[symbol];
             };
 
             ws.onerror = () => {
                 ws.close();
             };
         },
-        disconnectSymbol(symbol: string) {
-            const ws = this.websockets[symbol];
+        disconnectPrice(symbol: string) {
+            const ws = this.pricesWebsockets[symbol];
             if (ws) {
                 ws.close();
-                delete this.websockets[symbol];
+                delete this.pricesWebsockets[symbol];
             }
         },
-        marketBuy(symbol: string, ask: number, size: number) {
+        connectBookTicker(symbol: string) {
+            if (this.bookTickerWebsockets[symbol]) this.disconnectBookTicker(symbol);
+
+            const url = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@bookTicker`;
+            const ws = new WebSocket(url);
+            this.bookTickerWebsockets[symbol] = ws;
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    this.bookTickers[symbol] = {
+                        bid: parseFloat(data.b),
+                        ask: parseFloat(data.a)
+                    };
+                    
+                    this.pendingOrders.map(o => {
+                        if (o.symbol !== symbol || !this.bookTickers[symbol]) return;
+
+                        const shouldMarketBuy = o.direction === "buy" && (
+                            (o.orderType === "limit" && o.price >= this.bookTickers[symbol].ask)
+                            || (o.orderType === "stop" && o.price <= this.bookTickers[symbol].ask)
+                        );
+
+                        const shouldMarketSell = o.direction === "sell" && (
+                            (o.orderType === "limit" && o.price <= this.bookTickers[symbol].bid)
+                            || (o.orderType === "stop" && o.price >= this.bookTickers[symbol].bid)
+                        );
+
+                        if (shouldMarketBuy) {
+                            this.marketBuy(symbol, o.size);
+
+                            if (this.chart && o.pendingEntryLineId) {
+                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                            }
+
+                            const index = this.pendingOrders.indexOf(o);
+                            if (index !== -1) this.pendingOrders.splice(index, 1);
+                        } else if (shouldMarketSell) {
+                            this.marketSell(symbol, o.size);
+
+                            if (this.chart && o.pendingEntryLineId) {
+                                this.chart.removeOverlay({ id: o.pendingEntryLineId });
+                            }
+
+                            const index = this.pendingOrders.indexOf(o);
+                            if (index !== -1) this.pendingOrders.splice(index, 1);
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to parse bookTicker data:", e);
+                }
+            };
+
+            ws.onclose = () => {
+                delete this.bookTickerWebsockets[symbol];
+            };
+
+            ws.onerror = () => {
+                ws.close();
+            };
+        },
+        disconnectBookTicker(symbol: string) {
+            const ws = this.bookTickerWebsockets[symbol];
+            if (ws) {
+                ws.close();
+                delete this.bookTickerWebsockets[symbol];
+            }
+        },
+        marketBuy(symbol: string, size: number) {
+            if (!this.bookTickers[symbol]) return;
+
             const position: Position = {
                 symbol,
                 direction: "buy",
-                price: ask,
+                price: this.bookTickers[symbol].ask,
                 size,
                 timestamp: Date.now()
             };
@@ -206,30 +243,60 @@ export const useKlineStore = defineStore("kline", {
             if (this.chart) {
                 position.entryLineId = this.chart.createOverlay({
                     name: "entryLine",
-                    extendData: { direction: "buy", price: ask }
-                }) as Nullable<string>;
-            }
-
-            this.positions.push(position);
-        },
-        marketSell(symbol: string, bid: number, size: number) {
-            const position: Position = {
-                symbol,
-                direction: "sell",
-                price: bid,
-                size,
-                timestamp: Date.now()
-            };
-
-            if (this.chart) {
-                position.entryLineId = this.chart.createOverlay({
-                    name: "entryLine",
-                    extendData: { direction: "sell", price: bid },
+                    extendData: { direction: "buy", price: this.bookTickers[symbol].ask },
                     points: [{}]
                 }) as Nullable<string>;
             }
 
             this.positions.push(position);
+        },
+        marketSell(symbol: string, size: number) {
+            if (!this.bookTickers[symbol]) return;
+
+            const position: Position = {
+                symbol,
+                direction: "sell",
+                price: this.bookTickers[symbol].bid,
+                size,
+                timestamp: Date.now()
+            };
+
+            if (this.chart) {
+                position.entryLineId = this.chart.createOverlay({
+                    name: "entryLine",
+                    extendData: { direction: "sell", price: this.bookTickers[symbol].bid },
+                    points: [{}]
+                }) as Nullable<string>;
+            }
+
+            this.positions.push(position);
+        },
+        pendingOrder(symbol: string, direction: "buy" | "sell", price: number, size: number, pendingLineId?: Nullable<string>) {
+            const currentPrice = this.prices[symbol] ?? price;
+            const orderType = direction === "buy"
+                ? currentPrice > price ? "limit" : "stop"
+                : currentPrice < price ? "limit" : "stop";
+            const order: PendingOrder = {
+                symbol,
+                direction,
+                orderType,
+                price,
+                size
+            };
+
+            if (this.chart) {
+                order.pendingEntryLineId = this.chart.createOverlay({
+                    name: "pendingEntryLine",
+                    extendData: { direction, price },
+                    points: [{}]
+                }) as Nullable<string>;
+
+                if (pendingLineId) {
+                    this.chart.removeOverlay({ name: "pendingLine" });
+                }
+            }
+
+            this.pendingOrders.push(order);
         }
     }
 });

@@ -18,9 +18,9 @@
             />
         </div>
         <div v-if="collapsed" class="grid grid-cols-[1fr_2fr_1fr] gap-2 p-2 border-t border-muted">
-            <span class="text-start mt-auto text-xs text-success font-medium">{{ ask?.toFixed(2) }}</span>
+            <span class="text-start mt-auto text-xs text-success font-medium">{{ kline.bookTickers[kline.symbol]?.ask.toFixed(2) }}</span>
             <span class="text-center mt-auto text-xs text-muted font-medium">Margin</span>
-            <span class="text-end mt-auto text-xs text-error font-medium">{{ bid?.toFixed(2) }}</span>
+            <span class="text-end mt-auto text-xs text-error font-medium">{{ kline.bookTickers[kline.symbol]?.bid.toFixed(2) }}</span>
             <UButton @click="buy" label="BUY" color="success" :ui="{ base: 'justify-center' }"/>
             <UInputNumber v-model="size" :min="0.01" :max="10" :step="0.01" :format-options="{ minimumFractionDigits: 2 }" color="neutral"/>
             <UButton @click="sell" label="SELL" color="error" :ui="{ base: 'justify-center' }"/>
@@ -53,9 +53,6 @@
     
     const kline = useKlineStore();
 
-    const ws = ref<Nullable<WebSocket>>(null);
-    const bid = ref<Nullable<number>>(null);
-    const ask = ref<Nullable<number>>(null);
     const collapsed = ref<boolean>(true);
     const isMarket = ref<boolean>(true);
     const pendingPrice = ref<number>(0);
@@ -70,16 +67,20 @@
 
     const executeLabel = computed(() => {
         const price = (isMarket.value
-            ? direction.value === 'buy' ? ask.value : bid.value
+            ? direction.value === 'buy' ? kline.bookTickers[kline.symbol]?.ask : kline.bookTickers[kline.symbol]?.bid
             : pendingPrice.value)?.toFixed(2) ?? 0;
 
         return `Execute ${direction.value.toUpperCase()} ${size.value.toFixed(2)} @ ${price}`;
     });
 
-    watch(() => kline.symbol, (newSymbol, _oldSymbol) => {
-        if (!newSymbol) return;
-        initBookTickerStream();
-    }, { immediate: true });
+    watch(() => kline.symbol, () => {
+        pendingPrice.value = kline.prices[kline.symbol] ?? 0;
+    });
+
+    watch(() => kline.prices[kline.symbol], (price) => {
+        if (!price || pendingPrice.value !== 0) return;
+        pendingPrice.value = price;
+    });
 
     watch(pendingPrice, (newPrice, _oldPrice) => {
         if (newPrice && kline.chart && pendingLineId.value) {
@@ -111,96 +112,37 @@
         }
     }
 
-    function initBookTickerStream() {
-        if (ws.value) {
-            ws.value.close();
-            ws.value = null;
-        }
-
-        const url = `wss://stream.binance.com:9443/ws/${kline.symbol.toLowerCase()}@bookTicker`;
-        ws.value = new WebSocket(url);
-
-        ws.value.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                bid.value = parseFloat(data.b);
-                ask.value = parseFloat(data.a);
-                if (pendingPrice.value === 0) {
-                    pendingPrice.value = direction.value === "buy" ? ask.value : bid.value;
-                }
-            } catch (e) {
-                console.error("Failed to parse bookTicker data:", e);
-            }
-        };
-    }
-
-    function pendingOrder(direction: "buy" | "sell") {
-        const price = kline.prices[kline.symbol] ?? pendingPrice.value;
-        const orderType = direction === "buy"
-            ? price > pendingPrice.value ? "limit" : "stop"
-            : price < pendingPrice.value ? "limit" : "stop";
-        const order: PendingOrder = {
-            symbol: kline.symbol,
-            direction,
-            orderType,
-            price: pendingPrice.value,
-            size: size.value
-        };
-
-        if (kline.chart) {
-            order.pendingEntryLineId = kline.chart.createOverlay({
-                name: "pendingEntryLine",
-                extendData: { direction, price: pendingPrice.value },
-                points: [{}]
-            }) as Nullable<string>;
-
-            if (pendingLineId.value) {
-                kline.chart.removeOverlay({ name: "pendingLine" });
-                pendingLineId.value = null;
-            }
-        }
-
-        kline.pendingOrders.push(order);
-    }
-
     function buy() {
-        if (isMarket.value && ask.value) {
-            kline.marketBuy(kline.symbol, ask.value, size.value);
+        if (isMarket.value) {
+            kline.marketBuy(kline.symbol, size.value);
         } else if (!isMarket.value) {
-            pendingOrder("buy");
+            kline.pendingOrder(kline.symbol, "buy", pendingPrice.value, size.value, pendingLineId.value);
+            pendingLineId.value = null;
         }
         isMarket.value = true;
     }
 
     function sell() {
-        if (isMarket.value && bid.value) {
-            kline.marketSell(kline.symbol, bid.value, size.value);
+        if (isMarket.value) {
+            kline.marketSell(kline.symbol, size.value);
         } else if (!isMarket.value) {
-            pendingOrder("sell");
+            kline.pendingOrder(kline.symbol, "sell", pendingPrice.value, size.value, pendingLineId.value);
+            pendingLineId.value = null;
         }
         isMarket.value = true;
     }
 
     function execute() {
         if (isMarket.value) {
-            if (direction.value === "buy" && ask.value) {
-                kline.marketBuy(kline.symbol, ask.value, size.value);
-            } else if (direction.value === "sell" && bid.value) {
-                kline.marketSell(kline.symbol, bid.value, size.value);
+            if (direction.value === "buy") {
+                kline.marketBuy(kline.symbol, size.value);
+            } else if (direction.value === "sell") {
+                kline.marketSell(kline.symbol, size.value);
             }
         } else {
-            pendingOrder(direction.value);
+            kline.pendingOrder(kline.symbol, direction.value, pendingPrice.value, size.value, pendingLineId.value);
+            pendingLineId.value = null;
         }
-
         isMarket.value = true;
     }
-
-    onUnmounted(() => {
-        kline.positions.forEach((o: Position) => kline.disconnectSymbol(o.symbol));
-        
-        if (ws.value) {
-            ws.value.close();
-            ws.value = null;
-        }
-    });
 </script>
