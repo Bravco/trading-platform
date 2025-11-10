@@ -231,7 +231,6 @@ export const useKlineStore = defineStore("kline", {
         },
         marketBuy(symbol: string, size: number) {
             if (!this.bookTickers[symbol]) return;
-
             const position: Position = {
                 symbol,
                 direction: "buy",
@@ -239,20 +238,11 @@ export const useKlineStore = defineStore("kline", {
                 size,
                 timestamp: Date.now()
             };
-
-            if (this.chart) {
-                position.entryLineId = this.chart.createOverlay({
-                    name: "entryLine",
-                    extendData: { direction: "buy", price: this.bookTickers[symbol].ask },
-                    points: [{}]
-                }) as Nullable<string>;
-            }
-
+            this.drawEntryLine(position);
             this.positions.push(position);
         },
         marketSell(symbol: string, size: number) {
             if (!this.bookTickers[symbol]) return;
-
             const position: Position = {
                 symbol,
                 direction: "sell",
@@ -260,15 +250,7 @@ export const useKlineStore = defineStore("kline", {
                 size,
                 timestamp: Date.now()
             };
-
-            if (this.chart) {
-                position.entryLineId = this.chart.createOverlay({
-                    name: "entryLine",
-                    extendData: { direction: "sell", price: this.bookTickers[symbol].bid },
-                    points: [{}]
-                }) as Nullable<string>;
-            }
-
+            this.drawEntryLine(position);
             this.positions.push(position);
         },
         pendingOrder(symbol: string, direction: "buy" | "sell", price: number, size: number, pendingLineId?: Nullable<string>) {
@@ -283,20 +265,27 @@ export const useKlineStore = defineStore("kline", {
                 price,
                 size
             };
-
-            if (this.chart) {
-                order.pendingEntryLineId = this.chart.createOverlay({
-                    name: "pendingEntryLine",
-                    extendData: { direction, price },
-                    points: [{}]
-                }) as Nullable<string>;
-
-                if (pendingLineId) {
-                    this.chart.removeOverlay({ name: "pendingLine" });
-                }
-            }
-
+            this.drawPendingEntryLine(order);
+            if (this.chart && pendingLineId) this.chart.removeOverlay({ name: "pendingLine" });
             this.pendingOrders.push(order);
+        },
+        drawEntryLine(p: Position) {
+            if (!this.chart) return;
+            p.entryLineId = this.chart.createOverlay({
+                groupId: "orders",
+                name: "entryLine",
+                extendData: { direction: p.direction, price: p.price },
+                points: [{}]
+            }) as Nullable<string>;
+        },
+        drawPendingEntryLine(o: PendingOrder) {
+            if (!this.chart) return;
+            o.pendingEntryLineId = this.chart.createOverlay({
+                groupId: "orders",
+                name: "pendingEntryLine",
+                extendData: { direction: o.direction, price: o.price },
+                points: [{}]
+            }) as Nullable<string>;
         }
     }
 });

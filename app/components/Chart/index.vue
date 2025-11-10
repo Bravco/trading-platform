@@ -23,6 +23,18 @@
         kline.chart.applyNewData(data);
     });
 
+    watch(() => kline.symbol, () => {
+        if (!kline.chart) return;
+        kline.chart.scrollToRealTime();
+        kline.chart.removeOverlay({ groupId: "orders" });
+        kline.positions.forEach(p => {
+            if (kline.symbol === p.symbol) kline.drawEntryLine(p);
+        });
+        kline.pendingOrders.forEach(o => {
+            if (kline.symbol === o.symbol) kline.drawPendingEntryLine(o);
+        });
+    });
+
     watch(() => colorMode.value, () => {
         if (kline.chart) kline.chart.setStyles(kline.getThemeStyles());
     });
